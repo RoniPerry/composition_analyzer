@@ -1,62 +1,5 @@
 // Content script for analyzing fabric composition
 
-// Material definitions with sustainability scores and categories
-const MATERIALS = {
-    // Perfect sustainability (100) - regenerative and closed-loop materials
-    'recycled ocean plastic': { score: 100, category: 'regenerative' }, // Removes pollution + closed loop
-    'mycelium leather': { score: 100, category: 'regenerative' }, // Carbon negative + biodegradable
-    'agricultural waste fiber': { score: 100, category: 'regenerative' }, // Uses waste + improves soil
-    
-    // Highly sustainable materials (85-95)
-    'organic cotton': { score: 90, category: 'sustainable' },
-    'hemp': { score: 95, category: 'sustainable' }, // Lower water use than cotton, improves soil
-    'recycled cotton': { score: 85, category: 'sustainable' },
-    'recycled wool': { score: 80, category: 'sustainable' },
-    'linen': { score: 85, category: 'sustainable' },
-    'tencel': { score: 85, category: 'sustainable' },
-    'tencel modal': { score: 85, category: 'sustainable' }, // Sustainable due to closed-loop production process
-    'lyocell': { score: 85, category: 'sustainable' },  // Sustainable cellulose fiber with closed-loop production
-    'rws wool': { score: 90, category: 'sustainable' },
-    'rws extrafine merino': { score: 90, category: 'sustainable' },
-    'extrafine merino': { score: 85, category: 'sustainable' },
-    'responsible wool': { score: 85, category: 'sustainable' },
-    'merino wool': { score: 80, category: 'sustainable' },
-    'merino': { score: 80, category: 'sustainable' },
-    
-    // Moderate impact materials (60-75)
-    'mako cotton': { score: 75, category: 'moderate' },
-    'makò cotton': { score: 75, category: 'moderate' },
-    'makō cotton': { score: 75, category: 'moderate' },
-    'modal': { score: 70, category: 'moderate' },
-    'cotton': { score: 60, category: 'moderate' },
-    'wool': { score: 65, category: 'moderate' },
-    'viscose': { score: 60, category: 'moderate' },
-    'silk': { score: 65, category: 'moderate' },
-    'rayon': { score: 45, category: 'moderate' },  // Added for geel.us
-    
-    // Synthetic/Animal Welfare Concern materials (20-40)
-    'polyester': { score: 30, category: 'synthetic' },
-    'nylon': { score: 25, category: 'synthetic' },
-    'elastane': { score: 30, category: 'synthetic' },
-    'spandex': { score: 30, category: 'synthetic' },
-    'polyamide': { score: 25, category: 'synthetic' },
-    'acrylic': { score: 20, category: 'synthetic' },  // Very low score due to microplastic concerns
-
-    // Animal welfare concern materials (5-25)
-    'angora': { score: 15, category: 'animal_welfare' },     // Reduced score due to serious animal welfare concerns
-    'mohair': { score: 15, category: 'animal_welfare' },     // Similar concerns to angora
-    'exotic leather': { score: 5, category: 'animal_welfare' }, // Extremely low score due to endangered species concerns
-    'fur': { score: 10, category: 'animal_welfare' },        // Very low score due to animal welfare issues
-    'down': { score: 20, category: 'animal_welfare' },       // Unless certified responsible
-    'feathers': { score: 20, category: 'animal_welfare' },   // Unless certified responsible
-    'exotic fur': { score: 5, category: 'animal_welfare' },  // Extremely low score for exotic animal furs
-    'karakul': { score: 5, category: 'animal_welfare' },     // Very low score due to lamb welfare concerns
-    'shahtoosh': { score: 5, category: 'animal_welfare' },   // Critically endangered Tibetan antelope
-    'snake skin': { score: 10, category: 'animal_welfare' }, // Low score due to reptile welfare concerns
-    'alligator': { score: 10, category: 'animal_welfare' },  // Low score due to reptile welfare concerns
-    'crocodile': { score: 10, category: 'animal_welfare' },   // Low score due to reptile welfare concerns
-};
-
 // Define component patterns for parsing
 const COMPONENT_NAMES = {
     MAIN: ['MAIN FABRIC', 'SHELL', 'OUTER SHELL', 'FABRIC', 'MATERIAL'],
@@ -92,25 +35,16 @@ function findCompositionSections() {
     
     let foundComposition = false;
     
-    // Helper function to normalize material text
-    function normalizeMaterialText(text) {
-        return text.toLowerCase()
-            .replace(/rayon/g, 'viscose')  // Normalize rayon/viscose
-            .replace(/spandex/g, 'elastane')  // Normalize spandex/elastane
-            .trim();
-    }
-    
     // Helper function to add section while avoiding duplicates
     function addUniqueSection(section) {
-        // Normalize the text to help with deduplication
-        section.text = normalizeMaterialText(section.text);
+        // Clean up whitespace but preserve original material names
+        section.text = section.text.replace(/\s+/g, ' ').trim();
         
-        // Check if this section's text is already included in any existing section
-        const normalizedNewText = section.text.replace(/\s+/g, ' ').trim();
+        // Check if this exact combination of component and text already exists
         const exists = Array.from(sections).some(existingSection => {
             const existingObj = JSON.parse(existingSection);
-            const normalizedExistingText = existingObj.text.replace(/\s+/g, ' ').trim();
-            return normalizedExistingText === normalizedNewText;
+            return existingObj.component === section.component && 
+                   existingObj.text === section.text;
         });
         
         if (!exists) {
@@ -174,25 +108,6 @@ function normalizeMaterialName(material) {
     return material;
 }
 
-// Function to extract materials and their percentages from text
-function extractMaterials(text) {
-    if (!text) return [];
-    
-    const materials = [];
-    const matches = text.match(/(\d+)%\s*([A-Za-z\s-]+)/g) || [];
-    
-    matches.forEach(match => {
-        const [, percentage, material] = match.match(/(\d+)%\s*([A-Za-z\s-]+)/) || [];
-        if (percentage && material) {
-            materials.push({
-                name: normalizeMaterialName(material.trim()),
-                percentage: parseInt(percentage, 10)
-            });
-        }
-    });
-    
-    return materials;
-}
 
 // Get color based on sustainability score
 function getColorForScore(score) {
@@ -307,15 +222,20 @@ function updateFloatingUI(compositions) {
     let totalPercentage = 0;
     
     compositions.forEach(section => {
-        const extractedMaterials = extractMaterials(section.text);
-        extractedMaterials.forEach(material => {
-            const materialInfo = Object.entries(MATERIALS).find(([key]) => 
-                material.name.toLowerCase().includes(key)
+        // Parse the normalized text which is in format "55% material 45% material"
+        const parts = section.text.split(/\s+(?=\d+%)/);
+        parts.forEach(part => {
+            const [percentage, ...materialParts] = part.split(/\s+/);
+            const material = materialParts.join(' ');
+            const percentageValue = parseInt(percentage, 10);
+            
+            const materialInfo = Object.entries(window.MATERIALS).find(([key]) => 
+                material === key.toLowerCase().trim()
             );
             
             if (materialInfo) {
-                totalScore += materialInfo[1].score * (material.percentage / 100);
-                totalPercentage += material.percentage;
+                totalScore += materialInfo[1].score * (percentageValue / 100);
+                totalPercentage += percentageValue;
             }
         });
     });
@@ -339,7 +259,7 @@ function updateFloatingUI(compositions) {
         }
         mainComponents.get(main).push({
             subParts,
-            materials: extractMaterials(section.text)
+            text: section.text
         });
     });
     
@@ -364,12 +284,16 @@ function updateFloatingUI(compositions) {
             }
             
             // Add materials
-            item.materials.forEach(material => {
+            const parts = item.text.split(/\s+(?=\d+%)/);
+            parts.forEach(part => {
+                const [percentage, ...materialParts] = part.split(/\s+/);
+                const material = materialParts.join(' ');
+                
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'material-item';
                 
-                const materialInfo = Object.entries(MATERIALS).find(([key]) => 
-                    material.name.toLowerCase().includes(key)
+                const materialInfo = Object.entries(window.MATERIALS).find(([key]) => 
+                    material === key.toLowerCase().trim()
                 );
                 
                 if (materialInfo) {
@@ -377,7 +301,7 @@ function updateFloatingUI(compositions) {
                 }
                 
                 materialDiv.style.marginLeft = item.subParts.length > 0 ? '20px' : '0';
-                materialDiv.textContent = `${material.percentage}% ${material.name}`;
+                materialDiv.textContent = `${percentage} ${material}`;
                 componentSection.appendChild(materialDiv);
             });
         });

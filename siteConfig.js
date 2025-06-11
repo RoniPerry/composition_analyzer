@@ -29,7 +29,7 @@ window.siteConfig = {
             "[class*='product-composition']",
             "[class*='product-detail-info'] [class*='composition']"
         ],
-        parser: window.hmParser
+        parser: window.unifiedParser
     },
 
     "arket.com": {
@@ -42,7 +42,7 @@ window.siteConfig = {
             "[class*='material-info']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "mango.com": {
@@ -55,7 +55,7 @@ window.siteConfig = {
             "[class*='product-detail'] [class*='composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "uniqlo.com": {
@@ -68,7 +68,7 @@ window.siteConfig = {
             "[class*='product-materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "asos.com": {
@@ -81,7 +81,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-care']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "net-a-porter.com": {
@@ -94,7 +94,7 @@ window.siteConfig = {
             "[class*='product-information'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "farfetch.com": {
@@ -109,7 +109,7 @@ window.siteConfig = {
             "[data-testid='product-information-accordion'] div[class*='composition']",
             "div[class*='composition']"
         ],
-        parser: window.farfetchParser
+        parser: window.unifiedParser
     },
 
     "ssense.com": {
@@ -122,7 +122,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "matchesfashion.com": {
@@ -134,7 +134,7 @@ window.siteConfig = {
             "[class*='product-information'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "nordstrom.com": {
@@ -147,7 +147,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "revolve.com": {
@@ -160,7 +160,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "frett.life": {
@@ -171,7 +171,7 @@ window.siteConfig = {
             "div[data-block-type='accordion'] p:first-child",
             "div.metafield-rich_text_field p"
         ],
-        parser: window.frettParser
+        parser: window.unifiedParser
     },
 
     "massimodutti.com": {
@@ -187,7 +187,7 @@ window.siteConfig = {
             "[class*='product-composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "trestlv.com": {
@@ -201,7 +201,7 @@ window.siteConfig = {
             "[class*='composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     // Default fallback configuration for any unconfigured sites
@@ -234,6 +234,7 @@ window.siteConfig = {
             ".detail-trigger.uppercase + .detail-content",
             "[class*='product-detail'] [class*='composition']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     }
 }; 
+ 
