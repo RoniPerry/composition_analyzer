@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Fabric Composition Analyzer",
+  "version": "1.0",
+  "description": "Analyzes fabric composition on fashion websites",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["fabric-analysis-widget.css"],
+      "js": [
+        "parsers/genericParser.js",
+        "parsers/hmParser.js",
+        "parsers/zaraParser.js",
+        "parsers/farfetchParser.js",
+        "parsers/frettParser.js",
+        "siteConfig.js",
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [{
+    "resources": ["fabric-analysis-widget.css"],
+    "matches": ["<all_urls>"]
+  }]
+} 

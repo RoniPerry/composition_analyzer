@@ -1,0 +1,166 @@
+:root {
+    /* Main theme colors */
+    --color-high: #2e7d32;
+    --color-high-gradient: #43a047;
+    --color-medium: #f57c00;
+    --color-medium-gradient: #fb8c00;
+    --color-low: #c62828;
+    --color-low-gradient: #d32f2f;
+    
+    /* Common colors */
+    --color-white: #ffffff;
+    --color-error: #e74c3c;
+    --color-text: #2c3e50;
+    --color-text-secondary: #495057;
+    --color-text-muted: #6c757d;
+    --color-border: #e9ecef;
+    --color-background: #f8f9fa;
+    --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    width: 400px;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background-color: var(--color-background);
+}
+
+h1 {
+    color: var(--color-text);
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+h2 {
+    color: var(--color-text);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    text-align: center;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 10px;
+}
+
+h3 {
+    color: var(--color-text-secondary);
+    margin: 10px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+h4 {
+    color: var(--color-text-muted);
+    margin: 8px 0;
+    font-size: 0.95em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+p {
+    margin: 5px 0;
+    color: var(--color-text);
+}
+
+.error {
+    color: var(--color-error);
+    font-style: italic;
+}
+
+ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+li {
+    margin: 3px 0;
+    color: var(--color-text);
+}
+
+.composition-details {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+.component-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.component-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.sub-component-section {
+    margin-left: 15px;
+    padding-left: 10px;
+    border-left: 2px solid var(--color-border);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.component-section p {
+    margin: 5px 0;
+    color: var(--color-text);
+    font-size: 0.95em;
+}
+
+.sub-component-section p {
+    margin: 3px 0;
+}
+
+/* Sustainability score section */
+.sustainability-score {
+    margin-top: 20px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.sustainability-score h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.sustainability-score h3::before {
+    content: 'SUSTAINABILITY';
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+/* Score-based colors - using shared variables */
+#popup-container[data-score="high"] .sustainability-score {
+    background-color: color-mix(in srgb, var(--color-high) 10%, white);
+}
+
+#popup-container[data-score="high"] .sustainability-score h3,
+#popup-container[data-score="high"] .sustainability-score h3::before {
+    color: var(--color-high);
+}
+
+#popup-container[data-score="medium"] .sustainability-score {
+    background-color: color-mix(in srgb, var(--color-medium) 10%, white);
+}
+
+#popup-container[data-score="medium"] .sustainability-score h3,
+#popup-container[data-score="medium"] .sustainability-score h3::before {
+    color: var(--color-medium);
+}
+
+#popup-container[data-score="low"] .sustainability-score {
+    background-color: color-mix(in srgb, var(--color-low) 10%, white);
+}
+
+#popup-container[data-score="low"] .sustainability-score h3,
+#popup-container[data-score="low"] .sustainability-score h3::before {
+    color: var(--color-low);
+} 

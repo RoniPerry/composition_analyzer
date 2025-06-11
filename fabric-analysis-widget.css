@@ -1,0 +1,235 @@
+:root {
+    /* Main theme colors */
+    --color-high: #2e7d32;
+    --color-high-gradient: #43a047;
+    --color-medium: #f57c00;
+    --color-medium-gradient: #fb8c00;
+    --color-low: #c62828;
+    --color-low-gradient: #d32f2f;
+    
+    /* Material category colors */
+    --color-regenerative: #2ecc71;
+    --color-sustainable: #27ae60;
+    --color-moderate: #f1c40f;
+    --color-synthetic: #e74c3c;
+    --color-animal-welfare: #e74c3c; /* Same red as synthetic */
+    
+    /* Common colors */
+    --color-white: #ffffff;
+    --color-error: #e74c3c;
+    --color-text: rgba(0, 0, 0, 0.8);
+    --color-shadow: rgba(0, 0, 0, 0.15);
+    --color-overlay: rgba(255, 255, 255, 0.1);
+    --color-header-bg: rgba(0, 0, 0, 0.1);
+}
+
+#fabric-analysis-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 200px;
+    background: var(--color-white);
+    border-radius: 12px;
+    box-shadow: 0 3px 15px var(--color-shadow);
+    z-index: 10000;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fabric-analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-high);
+    color: white;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.fabric-analysis-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    line-height: 1;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
+
+#fabric-analysis-container.minimized .composition-details,
+#fabric-analysis-container.minimized .sustainability-score {
+    display: none;
+}
+
+.composition-details {
+    padding: 8px 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.component-section {
+    margin-bottom: 12px;
+}
+
+.component-section h3 {
+    font-size: 13px;
+    margin: 0 0 4px 0;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.material-item {
+    font-size: 12px;
+    padding: 6px 10px;
+    margin: 3px 0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.material-item::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* Material category indicators */
+.material-item[data-category="regenerative"]::before {
+    background-color: var(--color-regenerative);
+    box-shadow: 0 0 4px rgba(46, 204, 113, 0.4);
+}
+
+.material-item[data-category="sustainable"]::before {
+    background-color: var(--color-sustainable);
+    box-shadow: 0 0 4px rgba(39, 174, 96, 0.4);
+}
+
+.material-item[data-category="moderate"]::before {
+    background-color: var(--color-moderate);
+    box-shadow: 0 0 4px rgba(241, 196, 15, 0.4);
+}
+
+.material-item[data-category="synthetic"]::before,
+.material-item[data-category="animal_welfare"]::before {
+    background-color: var(--color-synthetic);
+    box-shadow: 0 0 4px rgba(231, 76, 60, 0.4);
+}
+
+/* Sustainability score section */
+.sustainability-score {
+    padding: 10px;
+    text-align: center;
+    background: var(--color-overlay);
+    backdrop-filter: blur(5px);
+}
+
+.sustainability-score h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.sustainability-score h3::before {
+    content: 'SUSTAINABILITY';
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    opacity: 0.9;
+}
+
+/* Score-based colors */
+#fabric-analysis-container[data-score="high"] {
+    background: linear-gradient(135deg, var(--color-high), var(--color-high-gradient));
+    border: 1px solid var(--color-high);
+}
+
+#fabric-analysis-container[data-score="medium"] {
+    background: linear-gradient(135deg, var(--color-medium), var(--color-medium-gradient));
+    border: 1px solid var(--color-medium);
+}
+
+#fabric-analysis-container[data-score="low"] {
+    background: linear-gradient(135deg, var(--color-low), var(--color-low-gradient));
+    border: 1px solid var(--color-low);
+}
+
+/* Common styles for all score levels */
+#fabric-analysis-container[data-score] .fabric-analysis-header {
+    background: var(--color-overlay);
+}
+
+#fabric-analysis-container[data-score] .sustainability-score h3,
+#fabric-analysis-container[data-score] .sustainability-score h3::before {
+    color: var(--color-white);
+}
+
+/* Error message */
+.error {
+    color: var(--color-error);
+    text-align: center;
+    padding: 12px;
+    margin: 0;
+    font-size: 12px;
+    background: var(--color-white);
+}
+
+/* Minimized state */
+#fabric-analysis-container.minimized {
+    transform: translateX(calc(100% - 40px));
+    box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Scrollbar styling */
+.composition-details::-webkit-scrollbar {
+    width: 6px;
+}
+
+.composition-details::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.composition-details::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.composition-details::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+} 
