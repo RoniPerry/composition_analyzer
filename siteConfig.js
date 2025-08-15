@@ -112,6 +112,22 @@ window.siteConfig = {
         parser: window.unifiedParser
     },
 
+    "stagni.com": {
+        selectors: [
+            // Primary selector for ST. AGNI product info wrapper
+            ".Product__InfoWrapper",
+            // Additional selector for ST. AGNI
+            "div[id='st-details_0-1'] div[class='station-tabs-content-inner']",
+            // Fallback selector for product meta description
+            ".ProductMeta__Description.sts",
+            // Backup selectors
+            "[class*='materials']",
+            "[class*='composition']",
+            "ul li"
+        ],
+        parser: window.unifiedParser
+    },
+
     "ssense.com": {
         selectors: [
             // Primary composition selectors

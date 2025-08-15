@@ -3,6 +3,18 @@ window.zaraParser = function(element) {
     const sections = [];
     const text = element.textContent.trim();
     console.log('Parsing Zara text:', text);
+    console.log('Raw text length:', text.length);
+    console.log('Text contains newlines:', text.includes('\n'));
+    console.log('Text contains MAIN FABRIC:', text.includes('MAIN FABRIC'));
+    console.log('Text contains EMBELLISHMENT:', text.includes('EMBELLISHMENT'));
+    
+    // Debug: Log the exact text structure
+    console.log('Text structure:');
+    const lines = text.split('\n');
+    console.log('Total lines:', lines.length);
+    lines.forEach((line, index) => {
+        console.log(`Line ${index}: "${line}" (length: ${line.length})`);
+    });
 
     // Helper function to clean up text
     function cleanText(text) {
@@ -12,79 +24,105 @@ window.zaraParser = function(element) {
     // Helper function to parse material and percentage
     function parseMaterialPercentage(text) {
         console.log('Parsing material text:', text);
-        // More flexible pattern that looks for percentage at start or end
-        const match = text.match(/(?:^|\s)(\d+)%\s*([A-Za-z\s-]+)|([A-Za-z\s-]+)\s*(\d+)%(?:\s|$)/i);
-        if (match) {
-            // Handle both formats: "100% polyester" and "polyester 100%"
-            const [, percent1, material1, material2, percent2] = match;
-            const percentage = percent1 || percent2;
-            const material = (material1 || material2).toLowerCase().trim();
-            const result = `${percentage}% ${material}`;
-            console.log('Found material:', result);
+        
+        // Handle multiple materials in one section (e.g., "68% cotton 32% polyester")
+        const materials = [];
+        
+        // Since text might not have newlines, use regex to find all percentage-material pairs
+        const materialPattern = /(\d+)%\s*([A-Za-z\s-]+)/gi;
+        const materialMatches = Array.from(text.matchAll(materialPattern));
+        
+        console.log('Found material matches:', materialMatches);
+        
+        for (const match of materialMatches) {
+            const percentage = match[1];
+            const material = match[2].toLowerCase().trim();
+            const materialEntry = `${percentage}% ${material}`;
+            materials.push(materialEntry);
+            console.log('Found material entry:', materialEntry);
+        }
+        
+        if (materials.length > 0) {
+            const result = materials.join(' ');
+            console.log('Final combined materials:', result);
             return result;
         }
-        console.log('No material match found');
+        
+        console.log('No materials found in text');
         return null;
     }
 
-    // Define Zara's specific format patterns
-    const components = [
-        { 
-            label: 'OUTER SHELL',
-            startPattern: /OUTER\s*SHELL/i,
-            endPattern: /(?=LINING|$)/i
-        },
-        { 
-            label: 'LINING\nUPPER PART',
-            startPattern: /LINING.*?UPPER\s*PART|UPPER\s*PART/i,
-            endPattern: /(?=LOWER\s*PART|$)/i
-        },
-        { 
-            label: 'LINING\nLOWER PART',
-            startPattern: /LOWER\s*PART/i,
-            endPattern: /$/i
-        }
-    ];
-
-    // Try each component pattern
-    let lastIndex = 0;
-    for (const { label, startPattern, endPattern } of components) {
-        console.log(`Looking for component "${label}" starting at index ${lastIndex}`);
-        // Find the start of this component
-        const textFromLastIndex = text.slice(lastIndex);
-        console.log('Text to search:', textFromLastIndex);
-        
-        const startMatch = textFromLastIndex.match(startPattern);
-        if (startMatch) {
-            console.log(`Found ${label} start at index ${startMatch.index}`);
-            // Move past the component label
-            const componentStart = lastIndex + startMatch.index + startMatch[0].length;
-            // Find the end of this component
-            const remainingText = text.slice(componentStart);
-            console.log(`Remaining text for ${label}:`, remainingText);
+    // Simple approach: treat each section as a flat component
+    let currentSection = null;
+    let currentContent = [];
+    
+    // Since the text might not have newlines, we need to use regex to find sections
+    // Look for section headers in the concatenated text
+    const sectionPattern = /(OUTER\s*SHELL|MAIN\s*FABRIC|EMBELLISHMENT|LINING)/gi;
+    const sectionMatches = Array.from(text.matchAll(sectionPattern));
+    
+    console.log('Found section matches:', sectionMatches);
+    
+    if (sectionMatches.length > 0) {
+        // Process each section
+        for (let i = 0; i < sectionMatches.length; i++) {
+            const currentMatch = sectionMatches[i];
+            const sectionName = currentMatch[1];
+            const sectionStart = currentMatch.index;
             
-            const endMatch = remainingText.match(endPattern);
-            if (endMatch) {
-                // Extract the text between start and end
-                const componentText = remainingText.slice(0, endMatch.index).trim();
-                console.log(`Component text for ${label}:`, componentText);
-                
-                const material = parseMaterialPercentage(componentText);
-                if (material) {
-                    sections.push({
-                        component: label,
-                        text: material
-                    });
-                }
-                // Update lastIndex to continue after this component
-                lastIndex = componentStart + endMatch.index;
-                console.log(`Updated lastIndex to ${lastIndex}`);
+            // Find the end of this section (start of next section or end of text)
+            const nextSectionStart = i < sectionMatches.length - 1 ? sectionMatches[i + 1].index : text.length;
+            const sectionContent = text.substring(sectionStart + sectionName.length, nextSectionStart).trim();
+            
+            console.log(`Processing section: ${sectionName}`);
+            console.log(`Section content: "${sectionContent}"`);
+            
+            // Extract materials from this section
+            const material = parseMaterialPercentage(sectionContent);
+            if (material) {
+                sections.push({
+                    component: sectionName,
+                    text: material
+                });
+                console.log(`Added section: ${sectionName} = ${material}`);
             }
-        } else {
-            console.log(`No match found for ${label}`);
+        }
+    } else {
+        // Fallback: if no sections found, try to extract all materials
+        console.log('No sections found, trying to extract all materials...');
+        const material = parseMaterialPercentage(text);
+        if (material) {
+            sections.push({
+                component: 'MAIN FABRIC',
+                text: material
+            });
         }
     }
 
     console.log('Zara parser found sections:', sections);
+    
+    // If no sections were found, try a fallback approach
+    if (sections.length === 0) {
+        console.log('No sections found, trying fallback parsing...');
+        
+        // Look for any percentage-material patterns in the text
+        const allMaterials = [];
+        const materialMatches = text.matchAll(/(\d+)%\s*([A-Za-z\s-]+)/gi);
+        
+        for (const match of materialMatches) {
+            const percentage = match[1];
+            const material = match[2].toLowerCase().trim();
+            allMaterials.push(`${percentage}% ${material}`);
+        }
+        
+        if (allMaterials.length > 0) {
+            console.log('Found materials with fallback method:', allMaterials);
+            sections.push({
+                component: 'MAIN FABRIC',
+                text: allMaterials.join(' ')
+            });
+        }
+    }
+    
     return sections.length > 0 ? sections : null;
 } 

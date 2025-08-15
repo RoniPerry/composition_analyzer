@@ -177,5 +177,54 @@ function runNormalizerTests() {
     console.log(`Test Summary: ${passedTests}/${totalTests} tests passed`);
 }
 
+// Test cases for parsers
+function testZaraParser() {
+    console.log('Testing Zara Parser...');
+    
+    // Test case 1: Original format
+    const testElement1 = {
+        textContent: `OUTER SHELL
+68% cotton
+32% polyester
+LINING
+100% cotton`
+    };
+    
+    const result1 = window.zaraParser(testElement1);
+    console.log('Test 1 result:', result1);
+    
+    // Test case 2: New format with MAIN FABRIC and EMBELLISHMENT
+    const testElement2 = {
+        textContent: `OUTER SHELL
+MAIN FABRIC
+68% cotton
+32% polyester
+EMBELLISHMENT
+100% polyester
+LINING
+100% cotton`
+    };
+    
+    const result2 = window.zaraParser(testElement2);
+    console.log('Test 2 result:', result2);
+    
+    // Test case 3: Just MAIN FABRIC format
+    const testElement3 = {
+        textContent: `MAIN FABRIC
+68% cotton
+32% polyester
+LINING
+100% cotton`
+    };
+    
+    const result3 = window.zaraParser(testElement3);
+    console.log('Test 3 result:', result3);
+}
+
 // Run tests when the file is loaded
 runNormalizerTests(); 
+
+// Run tests if this file is loaded
+if (typeof window !== 'undefined') {
+    window.testZaraParser = testZaraParser;
+} 
