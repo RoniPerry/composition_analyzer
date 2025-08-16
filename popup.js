@@ -1,6 +1,7 @@
 // Wait for the DOM to be loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Popup opened');
+    
     const resultsDiv = document.getElementById('composition');
     if (!resultsDiv) {
         console.error('Could not find element with id "composition"');

@@ -1,62 +1,5 @@
 // Content script for analyzing fabric composition
 
-// Material definitions with sustainability scores and categories
-const MATERIALS = {
-    // Perfect sustainability (100) - regenerative and closed-loop materials
-    'recycled ocean plastic': { score: 100, category: 'regenerative' }, // Removes pollution + closed loop
-    'mycelium leather': { score: 100, category: 'regenerative' }, // Carbon negative + biodegradable
-    'agricultural waste fiber': { score: 100, category: 'regenerative' }, // Uses waste + improves soil
-    
-    // Highly sustainable materials (85-95)
-    'organic cotton': { score: 90, category: 'sustainable' },
-    'hemp': { score: 95, category: 'sustainable' }, // Lower water use than cotton, improves soil
-    'recycled cotton': { score: 85, category: 'sustainable' },
-    'recycled wool': { score: 80, category: 'sustainable' },
-    'linen': { score: 85, category: 'sustainable' },
-    'tencel': { score: 85, category: 'sustainable' },
-    'tencel modal': { score: 85, category: 'sustainable' }, // Sustainable due to closed-loop production process
-    'lyocell': { score: 85, category: 'sustainable' },  // Sustainable cellulose fiber with closed-loop production
-    'rws wool': { score: 90, category: 'sustainable' },
-    'rws extrafine merino': { score: 90, category: 'sustainable' },
-    'extrafine merino': { score: 85, category: 'sustainable' },
-    'responsible wool': { score: 85, category: 'sustainable' },
-    'merino wool': { score: 80, category: 'sustainable' },
-    'merino': { score: 80, category: 'sustainable' },
-    
-    // Moderate impact materials (60-75)
-    'mako cotton': { score: 75, category: 'moderate' },
-    'makò cotton': { score: 75, category: 'moderate' },
-    'makō cotton': { score: 75, category: 'moderate' },
-    'modal': { score: 70, category: 'moderate' },
-    'cotton': { score: 60, category: 'moderate' },
-    'wool': { score: 65, category: 'moderate' },
-    'viscose': { score: 60, category: 'moderate' },
-    'silk': { score: 65, category: 'moderate' },
-    'rayon': { score: 45, category: 'moderate' },  // Added for geel.us
-    
-    // Synthetic/Animal Welfare Concern materials (20-40)
-    'polyester': { score: 30, category: 'synthetic' },
-    'nylon': { score: 25, category: 'synthetic' },
-    'elastane': { score: 30, category: 'synthetic' },
-    'spandex': { score: 30, category: 'synthetic' },
-    'polyamide': { score: 25, category: 'synthetic' },
-    'acrylic': { score: 20, category: 'synthetic' },  // Very low score due to microplastic concerns
-
-    // Animal welfare concern materials (5-25)
-    'angora': { score: 15, category: 'animal_welfare' },     // Reduced score due to serious animal welfare concerns
-    'mohair': { score: 15, category: 'animal_welfare' },     // Similar concerns to angora
-    'exotic leather': { score: 5, category: 'animal_welfare' }, // Extremely low score due to endangered species concerns
-    'fur': { score: 10, category: 'animal_welfare' },        // Very low score due to animal welfare issues
-    'down': { score: 20, category: 'animal_welfare' },       // Unless certified responsible
-    'feathers': { score: 20, category: 'animal_welfare' },   // Unless certified responsible
-    'exotic fur': { score: 5, category: 'animal_welfare' },  // Extremely low score for exotic animal furs
-    'karakul': { score: 5, category: 'animal_welfare' },     // Very low score due to lamb welfare concerns
-    'shahtoosh': { score: 5, category: 'animal_welfare' },   // Critically endangered Tibetan antelope
-    'snake skin': { score: 10, category: 'animal_welfare' }, // Low score due to reptile welfare concerns
-    'alligator': { score: 10, category: 'animal_welfare' },  // Low score due to reptile welfare concerns
-    'crocodile': { score: 10, category: 'animal_welfare' },   // Low score due to reptile welfare concerns
-};
-
 // Define component patterns for parsing
 const COMPONENT_NAMES = {
     MAIN: ['MAIN FABRIC', 'SHELL', 'OUTER SHELL', 'FABRIC', 'MATERIAL'],
@@ -87,30 +30,32 @@ function findCompositionSections() {
     console.log('🔍 Using site-specific configuration');
     console.log('Using selectors:', siteConfig.selectors);
     
+    // Check if site has preProcess function and run it first
+    if (siteConfig.preProcess && typeof siteConfig.preProcess === 'function') {
+        console.log('🔄 Running site-specific preProcess...');
+        // For now, just run preProcess synchronously to avoid breaking existing functionality
+        try {
+            siteConfig.preProcess();
+        } catch (err) {
+            console.error('❌ PreProcess failed:', err);
+        }
+    }
+    
     const siteElements = document.querySelectorAll(siteConfig.selectors.join(','));
     console.log('Found site-specific elements:', siteElements.length);
     
     let foundComposition = false;
     
-    // Helper function to normalize material text
-    function normalizeMaterialText(text) {
-        return text.toLowerCase()
-            .replace(/rayon/g, 'viscose')  // Normalize rayon/viscose
-            .replace(/spandex/g, 'elastane')  // Normalize spandex/elastane
-            .trim();
-    }
-    
     // Helper function to add section while avoiding duplicates
     function addUniqueSection(section) {
-        // Normalize the text to help with deduplication
-        section.text = normalizeMaterialText(section.text);
+        // Clean up whitespace but preserve original material names
+        section.text = section.text.replace(/\s+/g, ' ').trim();
         
-        // Check if this section's text is already included in any existing section
-        const normalizedNewText = section.text.replace(/\s+/g, ' ').trim();
+        // Check if this exact combination of component and text already exists
         const exists = Array.from(sections).some(existingSection => {
             const existingObj = JSON.parse(existingSection);
-            const normalizedExistingText = existingObj.text.replace(/\s+/g, ' ').trim();
-            return normalizedExistingText === normalizedNewText;
+            return existingObj.component === section.component && 
+                   existingObj.text === section.text;
         });
         
         if (!exists) {
@@ -174,25 +119,6 @@ function normalizeMaterialName(material) {
     return material;
 }
 
-// Function to extract materials and their percentages from text
-function extractMaterials(text) {
-    if (!text) return [];
-    
-    const materials = [];
-    const matches = text.match(/(\d+)%\s*([A-Za-z\s-]+)/g) || [];
-    
-    matches.forEach(match => {
-        const [, percentage, material] = match.match(/(\d+)%\s*([A-Za-z\s-]+)/) || [];
-        if (percentage && material) {
-            materials.push({
-                name: normalizeMaterialName(material.trim()),
-                percentage: parseInt(percentage, 10)
-            });
-        }
-    });
-    
-    return materials;
-}
 
 // Get color based on sustainability score
 function getColorForScore(score) {
@@ -211,19 +137,28 @@ function init() {
     console.log('Analyzing page for fabric composition...');
     try {
         const compositionSections = findCompositionSections();
+        
+        // Always create the UI container if it doesn't exist
+        let container = document.getElementById('fabric-analysis-container');
+        if (!container) {
+            createFloatingUI();
+        }
+        
         if (compositionSections && compositionSections.length > 0) {
-            // Check if container already exists
-            let container = document.getElementById('fabric-analysis-container');
-            if (!container) {
-                // If not, create new UI
-                createFloatingUI();
-            }
             updateFloatingUI(compositionSections);
         } else {
             console.log('No fabric composition found on this page');
+            // Show widget with just the bug report section when no composition is found
+            showNoCompositionUI();
         }
     } catch (error) {
         console.error('Error analyzing page:', error);
+        // Show widget with error message and bug report section
+        let container = document.getElementById('fabric-analysis-container');
+        if (!container) {
+            createFloatingUI();
+        }
+        showErrorUI(error);
     }
 }
 
@@ -279,6 +214,7 @@ function createFloatingUI() {
     
     const header = document.createElement('div');
     header.className = 'fabric-analysis-header';
+    header.style.cursor = 'grab';
     
     const title = document.createElement('h2');
     title.className = 'fabric-analysis-title';
@@ -292,6 +228,62 @@ function createFloatingUI() {
     header.appendChild(title);
     header.appendChild(closeBtn);
     container.appendChild(header);
+    
+    // Always add bug report section
+    const bugReportSection = document.createElement('div');
+    bugReportSection.className = 'bug-report-section';
+    
+    const bugReportText = document.createElement('p');
+    bugReportText.textContent = 'Encountered a problem? Tell us!';
+    bugReportText.className = 'bug-report-text';
+    
+    const bugReportButton = document.createElement('button');
+    bugReportButton.textContent = 'Report Bug';
+    bugReportButton.className = 'bug-report-button';
+    bugReportButton.onclick = () => showBugReportForm();
+    
+    bugReportSection.appendChild(bugReportText);
+    bugReportSection.appendChild(bugReportButton);
+    container.appendChild(bugReportSection);
+    
+    // Add drag functionality
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    header.addEventListener('mousedown', function(e) {
+        if (e.target === closeBtn) return; // Don't drag when clicking close button
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = container.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        
+        header.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        const newLeft = startLeft + deltaX;
+        const newTop = startTop + deltaY;
+        
+        container.style.left = newLeft + 'px';
+        container.style.top = newTop + 'px';
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            header.style.cursor = 'grab';
+        }
+    });
     
     document.body.appendChild(container);
     return container;
@@ -307,15 +299,37 @@ function updateFloatingUI(compositions) {
     let totalPercentage = 0;
     
     compositions.forEach(section => {
-        const extractedMaterials = extractMaterials(section.text);
-        extractedMaterials.forEach(material => {
-            const materialInfo = Object.entries(MATERIALS).find(([key]) => 
-                material.name.toLowerCase().includes(key)
-            );
+        // Parse the normalized text which is in format "55% material 45% material"
+        const parts = section.text.split(/\s+(?=\d+%)/);
+        parts.forEach(part => {
+            const [percentage, ...materialParts] = part.split(/\s+/);
+            const material = materialParts.join(' ');
+            const percentageValue = parseInt(percentage, 10);
+            
+            const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
+                // Try exact match first
+                if (material === key.toLowerCase().trim()) {
+                    return true;
+                }
+                
+                // Try flexible matching for different word orders
+                const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                if (materialWords === keyWords) {
+                    return true;
+                }
+                
+                // Try partial matching for special materials like "lenzing ecovero viscose"
+                if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
+                    return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
+                }
+                
+                return false;
+            });
             
             if (materialInfo) {
-                totalScore += materialInfo[1].score * (material.percentage / 100);
-                totalPercentage += material.percentage;
+                totalScore += materialInfo[1].score * (percentageValue / 100);
+                totalPercentage += percentageValue;
             }
         });
     });
@@ -339,7 +353,7 @@ function updateFloatingUI(compositions) {
         }
         mainComponents.get(main).push({
             subParts,
-            materials: extractMaterials(section.text)
+            text: section.text
         });
     });
     
@@ -364,20 +378,41 @@ function updateFloatingUI(compositions) {
             }
             
             // Add materials
-            item.materials.forEach(material => {
+            const parts = item.text.split(/\s+(?=\d+%)/);
+            parts.forEach(part => {
+                const [percentage, ...materialParts] = part.split(/\s+/);
+                const material = materialParts.join(' ');
+                
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'material-item';
                 
-                const materialInfo = Object.entries(MATERIALS).find(([key]) => 
-                    material.name.toLowerCase().includes(key)
-                );
+                const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
+                    // Try exact match first
+                    if (material === key.toLowerCase().trim()) {
+                        return true;
+                    }
+                    
+                    // Try flexible matching for different word orders
+                    const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                    const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                    if (materialWords === keyWords) {
+                        return true;
+                    }
+                    
+                    // Try partial matching for special materials like "lenzing ecovero viscose"
+                    if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
+                        return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
+                    }
+                    
+                    return false;
+                });
                 
                 if (materialInfo) {
                     materialDiv.setAttribute('data-category', materialInfo[1].category);
                 }
                 
                 materialDiv.style.marginLeft = item.subParts.length > 0 ? '20px' : '0';
-                materialDiv.textContent = `${material.percentage}% ${material.name}`;
+                materialDiv.textContent = `${percentage} ${material}`;
                 componentSection.appendChild(materialDiv);
             });
         });
@@ -402,6 +437,24 @@ function updateFloatingUI(compositions) {
     container.appendChild(header);
     container.appendChild(details);
     container.appendChild(scoreSection);
+    
+    // Add bug report section
+    const bugReportSection = document.createElement('div');
+    bugReportSection.className = 'bug-report-section';
+    
+    const bugReportText = document.createElement('p');
+    bugReportText.textContent = 'Encountered a problem? Tell us!';
+    bugReportText.className = 'bug-report-text';
+    
+    const bugReportButton = document.createElement('button');
+    bugReportButton.textContent = 'Report Bug';
+    bugReportButton.className = 'bug-report-button';
+    bugReportButton.onclick = () => showBugReportForm();
+    
+    bugReportSection.appendChild(bugReportText);
+    bugReportSection.appendChild(bugReportButton);
+    container.appendChild(bugReportSection);
+    
     if (wasMinimized) {
         container.classList.add('minimized');
     }
@@ -412,4 +465,172 @@ if (document.readyState === 'complete') {
     init();
 } else {
     window.addEventListener('load', init);
+}
+
+// Show bug report form
+function showBugReportForm() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'bug-report-modal';
+    modal.id = 'bug-report-modal';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'bug-report-modal-content';
+    
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'bug-report-modal-header';
+    
+    const modalTitle = document.createElement('h3');
+    modalTitle.textContent = 'Report a Bug';
+    
+    const closeModalBtn = document.createElement('button');
+    closeModalBtn.className = 'close-modal-button';
+    closeModalBtn.textContent = '✕';
+    closeModalBtn.onclick = () => modal.remove();
+    
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeModalBtn);
+    
+    const form = document.createElement('form');
+    form.className = 'bug-report-form';
+    
+    // URL field
+    const urlField = document.createElement('div');
+    urlField.className = 'form-field';
+    
+    const urlLabel = document.createElement('label');
+    urlLabel.textContent = 'Page URL:';
+    urlLabel.htmlFor = 'bug-url';
+    
+    const urlInput = document.createElement('input');
+    urlInput.type = 'text';
+    urlInput.id = 'bug-url';
+    urlInput.value = window.location.href;
+    urlInput.readOnly = true;
+    
+    urlField.appendChild(urlLabel);
+    urlField.appendChild(urlInput);
+    
+    // Description field
+    const descField = document.createElement('div');
+    descField.className = 'form-field';
+    
+    const descLabel = document.createElement('label');
+    descLabel.textContent = 'What went wrong?';
+    descLabel.htmlFor = 'bug-description';
+    
+    const descTextarea = document.createElement('textarea');
+    descTextarea.id = 'bug-description';
+    descTextarea.placeholder = 'Describe the issue you encountered...';
+    descTextarea.rows = 4;
+    descTextarea.required = true;
+    
+    descField.appendChild(descLabel);
+    descField.appendChild(descTextarea);
+    
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = 'Submit Report';
+    submitBtn.className = 'submit-bug-report';
+    
+    form.appendChild(urlField);
+    form.appendChild(descField);
+    form.appendChild(submitBtn);
+    
+    // Handle form submission
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        
+        const description = descTextarea.value.trim();
+        if (!description) {
+            alert('Please describe the issue.');
+            return;
+        }
+        
+        // Create bug report details
+        const bugReportText = 
+            `Bug Report Details:\n\n` +
+            `Page URL: ${window.location.href}\n\n` +
+            `Description: ${description}\n\n` +
+            `---\n` +
+            `Reported via Fabric Composition Extension\n\n` +
+            `Please send this report to: fabricompositionanalysis@gmail.com`;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(bugReportText).then(() => {
+            alert('Bug report copied to clipboard! Please paste it into an email and send to fabricompositionanalysis@gmail.com');
+        }).catch(() => {
+            // Fallback if clipboard API fails
+            const textArea = document.createElement('textarea');
+            textArea.value = bugReportText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Bug report copied to clipboard! Please paste it into an email and send to fabricompositionanalysis@gmail.com');
+        });
+        
+        modal.remove();
+    };
+    
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(form);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+}
+
+// Show UI when no composition is found
+function showNoCompositionUI() {
+    const container = document.getElementById('fabric-analysis-container');
+    if (!container) return;
+    
+    const header = container.querySelector('.fabric-analysis-header');
+    
+    // Create no composition message
+    const noCompositionSection = document.createElement('div');
+    noCompositionSection.className = 'no-composition-section';
+    
+    const noCompositionText = document.createElement('p');
+    noCompositionText.textContent = 'No fabric composition found on this page.';
+    noCompositionText.className = 'no-composition-text';
+    
+    noCompositionSection.appendChild(noCompositionText);
+    
+    // Update container content while preserving header and bug report section
+    const bugReportSection = container.querySelector('.bug-report-section');
+    container.innerHTML = '';
+    container.appendChild(header);
+    container.appendChild(noCompositionSection);
+    if (bugReportSection) {
+        container.appendChild(bugReportSection);
+    }
+}
+
+// Show UI when there's an error
+function showErrorUI(error) {
+    const container = document.getElementById('fabric-analysis-container');
+    if (!container) return;
+    
+    const header = container.querySelector('.fabric-analysis-header');
+    
+    // Create error message
+    const errorSection = document.createElement('div');
+    errorSection.className = 'error-section';
+    
+    const errorText = document.createElement('p');
+    errorText.textContent = 'An error occurred while analyzing this page.';
+    errorText.className = 'error-text';
+    
+    errorSection.appendChild(errorText);
+    
+    // Update container content while preserving header and bug report section
+    const bugReportSection = container.querySelector('.bug-report-section');
+    container.innerHTML = '';
+    container.appendChild(header);
+    container.appendChild(errorSection);
+    if (bugReportSection) {
+        container.appendChild(bugReportSection);
+    }
 } 

@@ -17,7 +17,7 @@ window.siteConfig = {
     "hm.com": {
         selectors: [
             // Primary composition selectors
-            "div[id='section-materialsAndSuppliersAccordion'] div div div ul li span",
+            "div[class='fddca0']",
             // Backup selectors
             "[class*='materialsAndSuppliersAccordion']",
             "div[class*='composition']",
@@ -29,7 +29,7 @@ window.siteConfig = {
             "[class*='product-composition']",
             "[class*='product-detail-info'] [class*='composition']"
         ],
-        parser: window.hmParser
+        parser: window.zaraParser
     },
 
     "arket.com": {
@@ -42,7 +42,7 @@ window.siteConfig = {
             "[class*='material-info']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "mango.com": {
@@ -55,7 +55,7 @@ window.siteConfig = {
             "[class*='product-detail'] [class*='composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "uniqlo.com": {
@@ -68,7 +68,7 @@ window.siteConfig = {
             "[class*='product-materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "asos.com": {
@@ -81,7 +81,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-care']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "net-a-porter.com": {
@@ -94,7 +94,7 @@ window.siteConfig = {
             "[class*='product-information'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "farfetch.com": {
@@ -109,7 +109,47 @@ window.siteConfig = {
             "[data-testid='product-information-accordion'] div[class*='composition']",
             "div[class*='composition']"
         ],
-        parser: window.farfetchParser
+        parser: window.unifiedParser
+    },
+
+    "stagni.com": {
+        selectors: [
+            // Primary selector for ST. AGNI materials section
+            "body > div:nth-child(11) > main:nth-child(3) > div:nth-child(1) > section:nth-child(4) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > div:nth-child(3) > div:nth-child(12) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1) > ul:nth-child(2)",
+            // Additional selector for ST. AGNI
+            "div[id='st-details_0-1'] div[class='station-tabs-content-inner']",
+            // Fallback selector for product meta description
+            ".ProductMeta__Description.sts",
+            // Backup selectors
+            "[class*='materials']",
+            "[class*='composition']",
+            "ul li"
+        ],
+        parser: window.unifiedParser
+    },
+
+    "cos.com": {
+        selectors: [
+            // Primary selector for COS materials section
+            "div[id='disclosure-:rp:']",
+            // Backup selectors
+            "div[id='disclosure-:rt:']",
+            "[class*='materials']",
+            "[class*='composition']"
+        ],
+        parser: window.zaraParser,
+        preProcess: function() {
+            // Add #product-description to URL if not present to make materials panel visible
+            if (!window.location.hash.includes('product-description')) {
+                window.location.hash = 'product-description';
+                // Wait a moment for the panel to load (synchronous approach)
+                // Note: This is a simple delay, not ideal but avoids breaking existing functionality
+                const start = Date.now();
+                while (Date.now() - start < 500) {
+                    // Simple delay loop
+                }
+            }
+        }
     },
 
     "ssense.com": {
@@ -122,7 +162,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "matchesfashion.com": {
@@ -134,7 +174,7 @@ window.siteConfig = {
             "[class*='product-information'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "nordstrom.com": {
@@ -147,7 +187,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "revolve.com": {
@@ -160,7 +200,7 @@ window.siteConfig = {
             "[class*='product-info'] [class*='materials']",
             "[class*='fabric-details']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "frett.life": {
@@ -171,7 +211,7 @@ window.siteConfig = {
             "div[data-block-type='accordion'] p:first-child",
             "div.metafield-rich_text_field p"
         ],
-        parser: window.frettParser
+        parser: window.unifiedParser
     },
 
     "massimodutti.com": {
@@ -187,7 +227,7 @@ window.siteConfig = {
             "[class*='product-composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     "trestlv.com": {
@@ -201,7 +241,7 @@ window.siteConfig = {
             "[class*='composition']",
             "[class*='material-info']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     },
 
     // Default fallback configuration for any unconfigured sites
@@ -234,6 +274,7 @@ window.siteConfig = {
             ".detail-trigger.uppercase + .detail-content",
             "[class*='product-detail'] [class*='composition']"
         ],
-        parser: window.genericParser
+        parser: window.unifiedParser
     }
 }; 
+ 

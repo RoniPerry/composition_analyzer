@@ -160,7 +160,7 @@ li {
     background-color: color-mix(in srgb, var(--color-low) 10%, white);
 }
 
-#popup-container[data-score="low"] .sustainability-score h3,
+#popup-container h3,
 #popup-container[data-score="low"] .sustainability-score h3::before {
     color: var(--color-low);
 } 
