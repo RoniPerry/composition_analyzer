@@ -2,7 +2,7 @@
 
 // Define component patterns for parsing
 const COMPONENT_NAMES = {
-    MAIN: ['MAIN FABRIC', 'SHELL', 'OUTER SHELL', 'FABRIC', 'MATERIAL'],
+    MAIN: ['MAIN FABRIC', 'SHELL', 'OUTER SHELL', 'FABRIC', 'MATERIAL', 'SELF 1', 'SELF 2'],
     SUB: ['UPPER PART', 'LOWER PART', 'FRONT', 'BACK', 'SLEEVE', 'BODY', 'LINING']
 };
 
@@ -177,10 +177,11 @@ function isProductPage() {
     const urlPatterns = [
         /\/p\/|\/product\/|\/item\/|\/goods\/|\/detail\/|\/productpage[\/\.]/i,
         /\/products?\//i,
-        /\/shop\/[^\/]+$/i,
+        /\/shop\/[^\/]+\/[^\/]+$/i,
         /-pid-/i,
         /\/shopping\/[^\/]+\/[^\/]+/i,  // For Farfetch URLs
-        /p\d{8}\.html/i  // For Zara URLs (e.g., p08074911.html)
+        /p\d{8}\.html/i,  // For Zara URLs (e.g., p08074911.html)
+        /\/prd\/\d+/i  // For ASOS URLs (e.g., /prd/208118633)
     ];
     
     // Check URL patterns

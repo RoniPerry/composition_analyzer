@@ -51,11 +51,10 @@ window.unifiedParser = function(element) {
         console.log('Normalized text:', normalized);
         
         if (normalized) {
-            sections.push({
-                component: "MAIN FABRIC",
-                text: normalized
-            });
-            console.log('✅ Added section to results:', { component: "MAIN FABRIC", text: normalized });
+            // Use the shared utility to parse sections into components
+            const parsedSections = window.parseSectionsToComponents(normalized);
+            sections.push(...parsedSections);
+            console.log('✅ Added sections using shared utility:', parsedSections);
         } else {
             console.log('❌ Normalizer returned null/empty');
         }

@@ -73,13 +73,23 @@ window.siteConfig = {
 
     "asos.com": {
         selectors: [
-            // Primary composition selectors
+            // Primary composition selector for ASOS
+            "div[id='productDescriptionAboutMe'] div[class='F_yfF']",
+            // ASOS accordion selectors
+            "[data-testid='product-information-accordion'] [class*='composition']",
+            "[data-testid='product-information-accordion'] [class*='material']",
+            "div[data-testid='product-information-accordion'] li",
+            // Product details section
             "ul#product-details li",
             ".product-description",
+            // Specific ASOS selectors
             "[data-test-id*='product-details'] [class*='composition']",
+            "[data-test-id*='product-details'] [class*='material']",
             // Backup selectors
             "[class*='product-info'] [class*='materials']",
-            "[class*='fabric-care']"
+            "[class*='fabric-care']",
+            "[class*='composition']",
+            "[class*='material']"
         ],
         parser: window.unifiedParser
     },
@@ -192,13 +202,28 @@ window.siteConfig = {
 
     "revolve.com": {
         selectors: [
-            // Primary composition selectors
+            // Primary composition selector for Revolve - target specific list items
+            ".product-details__list.u-margin-l--none li:first-child",
+            ".product-details__list.u-margin-l--none li:nth-child(1)",
+            // Target the specific fabric composition line (first list item)
+            ".product-details__list.u-margin-l--none > li:first-of-type",
+            // Revolve standard selectors
             ".product-description",
             "span.composition",
+            // Revolve-specific selectors
             "[data-test*='product-details'] [class*='composition']",
+            "[data-test*='product-details'] [class*='material']",
+            // Product details section
+            ".product-details li",
+            ".product-info li",
+            // Specific material selectors
+            "[class*='material-composition']",
+            "[class*='fabric-composition']",
             // Backup selectors
             "[class*='product-info'] [class*='materials']",
-            "[class*='fabric-details']"
+            "[class*='fabric-details']",
+            "[class*='composition']",
+            "[class*='material']"
         ],
         parser: window.unifiedParser
     },

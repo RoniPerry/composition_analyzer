@@ -18,8 +18,8 @@ if (isNode) {
     
     // Load normalizer using require
     try {
-        const normalizer = require('./normalizer.js');
-        globalObj.normalizeCompositionText = normalizer;
+        require('./normalizer.js');
+        // The normalizer sets global.normalizeCompositionText and global.parseSectionsToComponents
         console.log('✅ Normalizer loaded successfully');
     } catch (error) {
         console.error('❌ Failed to load normalizer:', error.message);
@@ -171,6 +171,16 @@ function runNormalizerTests() {
             name: "Section with single material",
             input: "Main fabric: 100% cotton",
             expected: "main fabric: 100% cotton"
+        },
+        {
+            name: "Revolve Self 1 and Self 2",
+            input: "Self 1: 95% polyester, 5% spandex. Self 2: 90% polyester, 10% spandex",
+            expected: "self 1: 95% polyester 5% spandex. self 2: 90% polyester 10% spandex"
+        },
+        {
+            name: "Revolve concatenated sections issue",
+            input: "Self 1: 95% polyester, 5% spandexSelf 2: 90% polyester, 10% spandex",
+            expected: "self 1: 95% polyester 5% spandex. self 2: 90% polyester 10% spandex"
         }
     ];
 
