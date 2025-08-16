@@ -163,4 +163,56 @@ li {
 #popup-container h3,
 #popup-container[data-score="low"] .sustainability-score h3::before {
     color: var(--color-low);
+}
+
+/* Click listener section styles */
+#click-listener-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--color-shadow);
+    border: 1px solid var(--color-border);
+}
+
+.click-listener-btn {
+    background-color: var(--color-high);
+    color: var(--color-white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+}
+
+.click-listener-btn:hover {
+    background-color: var(--color-high-gradient);
+}
+
+.click-listener-btn:active {
+    transform: translateY(1px);
+}
+
+.click-listener-btn.listening {
+    background-color: var(--color-medium);
+}
+
+.click-listener-btn.listening:hover {
+    background-color: var(--color-medium-gradient);
+}
+
+.status-text {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    min-height: 16px;
+}
+
+.status-text.active {
+    color: var(--color-high);
+    font-weight: 600;
 } 

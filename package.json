@@ -1,0 +1,22 @@
+{
+  "name": "fabric-composition-analyzer",
+  "version": "1.0.0",
+  "description": "Chrome extension for analyzing fabric composition on fashion websites",
+  "main": "content.js",
+  "scripts": {
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "css-selector-generator": "^2.4.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "chrome-extension",
+    "fabric",
+    "composition",
+    "fashion",
+    "sustainability"
+  ],
+  "author": "Fabric Composition Analyzer",
+  "license": "MIT"
+}
