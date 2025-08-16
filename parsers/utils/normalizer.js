@@ -12,6 +12,13 @@
 function cleanNonCompositionMaterials(text) {
     console.log('🧽 cleanNonCompositionMaterials called with:', text);
     
+    // Check if materials database is available
+    const materialsDB = (typeof window !== 'undefined' ? window.MATERIALS : global.MATERIALS);
+    if (!materialsDB || typeof materialsDB !== 'object') {
+        console.log('⚠️ Materials database not available, skipping material cleaning');
+        return text; // Return original text if no database
+    }
+    
     // First try to find complete valid compositions (adding up to 100%)
     const compositions = text.split(/[.;\n]/).map(part => {
         console.log('🔍 Processing part:', part);
@@ -36,27 +43,38 @@ function cleanNonCompositionMaterials(text) {
             if (/^\d/.test(pair)) {
                 // "75% cotton" format
                 [percentage, ...materialParts] = pair.split(/\s+/);
-                materialText = materialParts.join(' ').toLowerCase();
+                materialText = materialParts.join(' '); // Remove toLowerCase()
             } else {
                 // "cotton 75%" format
                 const parts = pair.split(/\s+/);
                 percentage = parts.pop(); // Get the last part (percentage)
-                materialText = parts.join(' ').toLowerCase();
+                materialText = parts.join(' '); // Remove toLowerCase()
             }
             
             console.log(`📊 Extracted: percentage=${percentage}, material="${materialText}"`);
             
             // Check if this exact material exists in our database
-            if (Object.keys(window.MATERIALS).some(m => m.toLowerCase() === materialText)) {
+            if (Object.keys(materialsDB).some(m => m.toLowerCase() === materialText.toLowerCase())) {
                 const result = `${percentage} ${materialText}`;
                 console.log(`✅ Exact match found: ${result}`);
                 return result; // Always output in percentage-first format
             }
             
+            // Check for special material patterns that should be preserved
+            // Special handling for materials like "Lenzing Ecovero Viscose", "Makò Cotton", "Pima Cotton", "BCI Cotton"
+            if (materialText.toLowerCase().includes('lenzing') || 
+                materialText.toLowerCase().includes('ecovero') ||
+                (materialText.toLowerCase().includes('cotton') && materialText.toLowerCase() !== 'cotton')) {
+                // This is a special material variety, keep the full name
+                const result = `${percentage} ${materialText}`;
+                console.log(`✅ Special material variety preserved: ${result}`);
+                return result;
+            }
+            
             // If no exact match, look for partial matches
             const words = materialText.split(/\s+/);
             for (const word of words) {
-                if (Object.keys(window.MATERIALS).some(m => m.toLowerCase() === word)) {
+                if (Object.keys(materialsDB).some(m => m.toLowerCase() === word.toLowerCase())) {
                     const result = `${percentage} ${word}`;
                     console.log(`✅ Partial match found: ${result}`);
                     return result; // Keep just the matching material word
@@ -98,7 +116,7 @@ function cleanNonCompositionMaterials(text) {
     }
     
     console.log('❌ No valid compositions found, returning empty string');
-    return ''; // Return empty string if no valid compositions found
+    return '';
 }
 
 function normalizeCompositionText(text) {
@@ -113,39 +131,79 @@ function normalizeCompositionText(text) {
     
     console.log('📝 After removing prefixes:', normalized);
 
-    // Step 2: Clean up non-composition material mentions
-    normalized = cleanNonCompositionMaterials(normalized);
-    console.log('🧹 After cleaning non-composition materials:', normalized);
-
-    // Step 3: Basic text cleanup
+    // Step 2: Basic cleanup
     normalized = normalized
         .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
         .replace(/[\u00A0]/g, ' ')       // Replace non-breaking spaces
         .replace(/&nbsp;/g, ' ')         // Replace HTML non-breaking spaces
         .replace(/[™®©]/g, '')           // Remove trademark symbols
-        .toLowerCase();                   // Convert to lowercase
+        .toLowerCase()                    // Convert to lowercase
+        .trim();                         // Remove leading/trailing spaces
     
     console.log('✨ After basic cleanup:', normalized);
     
-    // Step 4: Handle line breaks and commas
+    // Step 3: Handle line breaks and commas
     normalized = normalized
         .replace(/,\s*\n/g, ' ')         // Replace comma + newline with space
         .replace(/\n/g, ' ')             // Replace newlines with space
-        .replace(/,\s*/g, ' ')           // Replace commas with space
         .replace(/\s+/g, ' ')            // Clean up any double spaces
         .trim();                         // Final trim
     
     console.log('🔧 After handling line breaks and commas:', normalized);
     
-    // Step 5: Extract and validate percentages
+    // NEW: Step 4: Smart composition grouping by sections (BEFORE cleaning)
+    const sections = [];
+    const sectionPattern = /(shell|lining|trim|outer|main\s+fabric|fabric|material):\s*([^.;]*(?:[.;]|$))/gi;
+    const sectionMatches = Array.from(normalized.matchAll(sectionPattern));
+    
+    if (sectionMatches.length > 0) {
+        console.log('🔍 Found section headers:', sectionMatches.length);
+        
+        for (const match of sectionMatches) {
+            const sectionType = match[1]; // Keep original casing
+            const sectionContent = match[2].trim();
+            console.log(`📋 Processing section: ${sectionType} = "${sectionContent}"`);
+            
+            // Extract materials from this section
+            const sectionMaterials = extractMaterialsFromText(sectionContent);
+            if (sectionMaterials && sectionMaterials.length > 0) {
+                sections.push({
+                    type: sectionType,
+                    materials: sectionMaterials
+                });
+                console.log(`✅ Added section ${sectionType}:`, sectionMaterials);
+            }
+        }
+        
+        if (sections.length > 0) {
+            // Return all sections with preserved formatting
+            const result = sections.map(section => 
+                `${section.type}: ${section.materials}`
+            ).join('. '); // Use periods instead of newlines
+            
+            console.log('🎯 Returning grouped sections:', result);
+            return result;
+        }
+    }
+    
+    // Step 5: Clean up non-composition material mentions (fallback)
+    console.log('🔄 No sections found, cleaning non-composition materials...');
+    normalized = cleanNonCompositionMaterials(normalized);
+    console.log('🧹 After cleaning non-composition materials:', normalized);
+    
+    // Step 6: Fallback to original logic if no sections found
+    console.log('🔄 Using fallback logic...');
+    return extractMaterialsFromText(normalized);
+}
+
+// Helper function to extract materials from text
+function extractMaterialsFromText(text) {
     const materials = [];
     let totalPercentage = 0;
     
-    // Unified pattern that matches both formats:
-    // 1. "55% cotton" or "55% makò cotton" (percentage first)
-    // 2. "cotton 55%" or "makò cotton 55%" (material first)
-    const regex = /(?:(\d+(?:\.\d+)?)%\s*([a-zà-ÿ\s-]+?)(?=\s+\d+%|$))|(?:([a-zà-ÿ\s-]+?)\s+(\d+(?:\.\d+)?)%)/gi;
-    const matches = Array.from(normalized.matchAll(regex));
+    // Simple pattern that captures each percentage-material pair
+    const regex = /(\d+(?:\.\d+)?)%\s*([^0-9%]+?)(?=\s*\d+%|$)/gi;
+    const matches = Array.from(text.matchAll(regex));
     
     console.log('🔍 Regex matches found:', matches.length);
     matches.forEach((match, index) => {
@@ -153,9 +211,11 @@ function normalizeCompositionText(text) {
     });
     
     for (const match of matches) {
-        // Handle both formats
-        const percentage = parseFloat(match[1] || match[4]);
-        const material = (match[2] || match[3] || '').trim();
+        // Handle percentage-first format: "55% cotton"
+        const percentage = parseFloat(match[1]);
+        const material = match[2].trim()
+            .replace(/[,.;]$/, '') // Remove trailing punctuation
+            .replace(/^[,.;]/, ''); // Remove leading punctuation
         
         console.log(`📊 Processing match: percentage=${percentage}, material="${material}"`);
         
@@ -171,14 +231,35 @@ function normalizeCompositionText(text) {
     console.log('📋 Final materials array:', materials);
     console.log('🧮 Total percentage calculated:', totalPercentage);
     
-    // Step 6: Validate total percentage (allow for small rounding differences)
+    // Validate total percentage (allow for small rounding differences)
     if (materials.length > 0 && Math.abs(totalPercentage - 100) <= 0.2) {
-        const result = materials.join(' ');
+        const result = materials.join(' '); // Remove commas, use spaces
         console.log('✅ Validation passed! Returning:', result);
         return result;
     } else {
         console.log(`❌ Validation failed! Total: ${totalPercentage}%, expected: 100% (±0.2)`);
         console.log('❌ Materials found:', materials);
+        
+        // If validation fails, try to find a subset that adds up to 100%
+        if (materials.length > 1) {
+            console.log('🔄 Trying to find valid subset...');
+            for (let i = 0; i < materials.length; i++) {
+                for (let j = i + 1; j <= materials.length; j++) {
+                    const subset = materials.slice(i, j);
+                    const subsetTotal = subset.reduce((sum, mat) => {
+                        const percent = parseFloat(mat.match(/\d+(?:\.\d+)?/)[0]);
+                        return sum + percent;
+                    }, 0);
+                    
+                    if (Math.abs(subsetTotal - 100) <= 0.2) {
+                        const result = subset.join(' '); // Remove commas, use spaces
+                        console.log(`✅ Found valid subset: ${result} (total: ${subsetTotal}%)`);
+                        return result;
+                    }
+                }
+            }
+        }
+        
         return ''; // Return empty string if validation fails
     }
 }

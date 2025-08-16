@@ -30,6 +30,17 @@ function findCompositionSections() {
     console.log('🔍 Using site-specific configuration');
     console.log('Using selectors:', siteConfig.selectors);
     
+    // Check if site has preProcess function and run it first
+    if (siteConfig.preProcess && typeof siteConfig.preProcess === 'function') {
+        console.log('🔄 Running site-specific preProcess...');
+        // For now, just run preProcess synchronously to avoid breaking existing functionality
+        try {
+            siteConfig.preProcess();
+        } catch (err) {
+            console.error('❌ PreProcess failed:', err);
+        }
+    }
+    
     const siteElements = document.querySelectorAll(siteConfig.selectors.join(','));
     console.log('Found site-specific elements:', siteElements.length);
     
@@ -126,19 +137,28 @@ function init() {
     console.log('Analyzing page for fabric composition...');
     try {
         const compositionSections = findCompositionSections();
+        
+        // Always create the UI container if it doesn't exist
+        let container = document.getElementById('fabric-analysis-container');
+        if (!container) {
+            createFloatingUI();
+        }
+        
         if (compositionSections && compositionSections.length > 0) {
-            // Check if container already exists
-            let container = document.getElementById('fabric-analysis-container');
-            if (!container) {
-                // If not, create new UI
-                createFloatingUI();
-            }
             updateFloatingUI(compositionSections);
         } else {
             console.log('No fabric composition found on this page');
+            // Show widget with just the bug report section when no composition is found
+            showNoCompositionUI();
         }
     } catch (error) {
         console.error('Error analyzing page:', error);
+        // Show widget with error message and bug report section
+        let container = document.getElementById('fabric-analysis-container');
+        if (!container) {
+            createFloatingUI();
+        }
+        showErrorUI(error);
     }
 }
 
@@ -194,6 +214,7 @@ function createFloatingUI() {
     
     const header = document.createElement('div');
     header.className = 'fabric-analysis-header';
+    header.style.cursor = 'grab';
     
     const title = document.createElement('h2');
     title.className = 'fabric-analysis-title';
@@ -207,6 +228,62 @@ function createFloatingUI() {
     header.appendChild(title);
     header.appendChild(closeBtn);
     container.appendChild(header);
+    
+    // Always add bug report section
+    const bugReportSection = document.createElement('div');
+    bugReportSection.className = 'bug-report-section';
+    
+    const bugReportText = document.createElement('p');
+    bugReportText.textContent = 'Encountered a problem? Tell us!';
+    bugReportText.className = 'bug-report-text';
+    
+    const bugReportButton = document.createElement('button');
+    bugReportButton.textContent = 'Report Bug';
+    bugReportButton.className = 'bug-report-button';
+    bugReportButton.onclick = () => showBugReportForm();
+    
+    bugReportSection.appendChild(bugReportText);
+    bugReportSection.appendChild(bugReportButton);
+    container.appendChild(bugReportSection);
+    
+    // Add drag functionality
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    header.addEventListener('mousedown', function(e) {
+        if (e.target === closeBtn) return; // Don't drag when clicking close button
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = container.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        
+        header.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        const newLeft = startLeft + deltaX;
+        const newTop = startTop + deltaY;
+        
+        container.style.left = newLeft + 'px';
+        container.style.top = newTop + 'px';
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            header.style.cursor = 'grab';
+        }
+    });
     
     document.body.appendChild(container);
     return container;
@@ -229,9 +306,26 @@ function updateFloatingUI(compositions) {
             const material = materialParts.join(' ');
             const percentageValue = parseInt(percentage, 10);
             
-            const materialInfo = Object.entries(window.MATERIALS).find(([key]) => 
-                material === key.toLowerCase().trim()
-            );
+            const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
+                // Try exact match first
+                if (material === key.toLowerCase().trim()) {
+                    return true;
+                }
+                
+                // Try flexible matching for different word orders
+                const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                if (materialWords === keyWords) {
+                    return true;
+                }
+                
+                // Try partial matching for special materials like "lenzing ecovero viscose"
+                if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
+                    return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
+                }
+                
+                return false;
+            });
             
             if (materialInfo) {
                 totalScore += materialInfo[1].score * (percentageValue / 100);
@@ -292,9 +386,26 @@ function updateFloatingUI(compositions) {
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'material-item';
                 
-                const materialInfo = Object.entries(window.MATERIALS).find(([key]) => 
-                    material === key.toLowerCase().trim()
-                );
+                const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
+                    // Try exact match first
+                    if (material === key.toLowerCase().trim()) {
+                        return true;
+                    }
+                    
+                    // Try flexible matching for different word orders
+                    const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                    const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
+                    if (materialWords === keyWords) {
+                        return true;
+                    }
+                    
+                    // Try partial matching for special materials like "lenzing ecovero viscose"
+                    if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
+                        return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
+                    }
+                    
+                    return false;
+                });
                 
                 if (materialInfo) {
                     materialDiv.setAttribute('data-category', materialInfo[1].category);
@@ -326,6 +437,24 @@ function updateFloatingUI(compositions) {
     container.appendChild(header);
     container.appendChild(details);
     container.appendChild(scoreSection);
+    
+    // Add bug report section
+    const bugReportSection = document.createElement('div');
+    bugReportSection.className = 'bug-report-section';
+    
+    const bugReportText = document.createElement('p');
+    bugReportText.textContent = 'Encountered a problem? Tell us!';
+    bugReportText.className = 'bug-report-text';
+    
+    const bugReportButton = document.createElement('button');
+    bugReportButton.textContent = 'Report Bug';
+    bugReportButton.className = 'bug-report-button';
+    bugReportButton.onclick = () => showBugReportForm();
+    
+    bugReportSection.appendChild(bugReportText);
+    bugReportSection.appendChild(bugReportButton);
+    container.appendChild(bugReportSection);
+    
     if (wasMinimized) {
         container.classList.add('minimized');
     }
@@ -336,4 +465,172 @@ if (document.readyState === 'complete') {
     init();
 } else {
     window.addEventListener('load', init);
+}
+
+// Show bug report form
+function showBugReportForm() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'bug-report-modal';
+    modal.id = 'bug-report-modal';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'bug-report-modal-content';
+    
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'bug-report-modal-header';
+    
+    const modalTitle = document.createElement('h3');
+    modalTitle.textContent = 'Report a Bug';
+    
+    const closeModalBtn = document.createElement('button');
+    closeModalBtn.className = 'close-modal-button';
+    closeModalBtn.textContent = '✕';
+    closeModalBtn.onclick = () => modal.remove();
+    
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeModalBtn);
+    
+    const form = document.createElement('form');
+    form.className = 'bug-report-form';
+    
+    // URL field
+    const urlField = document.createElement('div');
+    urlField.className = 'form-field';
+    
+    const urlLabel = document.createElement('label');
+    urlLabel.textContent = 'Page URL:';
+    urlLabel.htmlFor = 'bug-url';
+    
+    const urlInput = document.createElement('input');
+    urlInput.type = 'text';
+    urlInput.id = 'bug-url';
+    urlInput.value = window.location.href;
+    urlInput.readOnly = true;
+    
+    urlField.appendChild(urlLabel);
+    urlField.appendChild(urlInput);
+    
+    // Description field
+    const descField = document.createElement('div');
+    descField.className = 'form-field';
+    
+    const descLabel = document.createElement('label');
+    descLabel.textContent = 'What went wrong?';
+    descLabel.htmlFor = 'bug-description';
+    
+    const descTextarea = document.createElement('textarea');
+    descTextarea.id = 'bug-description';
+    descTextarea.placeholder = 'Describe the issue you encountered...';
+    descTextarea.rows = 4;
+    descTextarea.required = true;
+    
+    descField.appendChild(descLabel);
+    descField.appendChild(descTextarea);
+    
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = 'Submit Report';
+    submitBtn.className = 'submit-bug-report';
+    
+    form.appendChild(urlField);
+    form.appendChild(descField);
+    form.appendChild(submitBtn);
+    
+    // Handle form submission
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        
+        const description = descTextarea.value.trim();
+        if (!description) {
+            alert('Please describe the issue.');
+            return;
+        }
+        
+        // Create bug report details
+        const bugReportText = 
+            `Bug Report Details:\n\n` +
+            `Page URL: ${window.location.href}\n\n` +
+            `Description: ${description}\n\n` +
+            `---\n` +
+            `Reported via Fabric Composition Extension\n\n` +
+            `Please send this report to: fabricompositionanalysis@gmail.com`;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(bugReportText).then(() => {
+            alert('Bug report copied to clipboard! Please paste it into an email and send to fabricompositionanalysis@gmail.com');
+        }).catch(() => {
+            // Fallback if clipboard API fails
+            const textArea = document.createElement('textarea');
+            textArea.value = bugReportText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Bug report copied to clipboard! Please paste it into an email and send to fabricompositionanalysis@gmail.com');
+        });
+        
+        modal.remove();
+    };
+    
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(form);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+}
+
+// Show UI when no composition is found
+function showNoCompositionUI() {
+    const container = document.getElementById('fabric-analysis-container');
+    if (!container) return;
+    
+    const header = container.querySelector('.fabric-analysis-header');
+    
+    // Create no composition message
+    const noCompositionSection = document.createElement('div');
+    noCompositionSection.className = 'no-composition-section';
+    
+    const noCompositionText = document.createElement('p');
+    noCompositionText.textContent = 'No fabric composition found on this page.';
+    noCompositionText.className = 'no-composition-text';
+    
+    noCompositionSection.appendChild(noCompositionText);
+    
+    // Update container content while preserving header and bug report section
+    const bugReportSection = container.querySelector('.bug-report-section');
+    container.innerHTML = '';
+    container.appendChild(header);
+    container.appendChild(noCompositionSection);
+    if (bugReportSection) {
+        container.appendChild(bugReportSection);
+    }
+}
+
+// Show UI when there's an error
+function showErrorUI(error) {
+    const container = document.getElementById('fabric-analysis-container');
+    if (!container) return;
+    
+    const header = container.querySelector('.fabric-analysis-header');
+    
+    // Create error message
+    const errorSection = document.createElement('div');
+    errorSection.className = 'error-section';
+    
+    const errorText = document.createElement('p');
+    errorText.textContent = 'An error occurred while analyzing this page.';
+    errorText.className = 'error-text';
+    
+    errorSection.appendChild(errorText);
+    
+    // Update container content while preserving header and bug report section
+    const bugReportSection = container.querySelector('.bug-report-section');
+    container.innerHTML = '';
+    container.appendChild(header);
+    container.appendChild(errorSection);
+    if (bugReportSection) {
+        container.appendChild(bugReportSection);
+    }
 } 

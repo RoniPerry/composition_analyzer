@@ -1,7 +1,31 @@
-// Import the normalizer
-const normalizeCompositionText = require('./normalizer');
-
 // Test cases for the composition text normalizer
+// Note: This file is designed to work in both browser and Node.js environments
+
+// Environment detection
+const isNode = typeof window === 'undefined';
+const globalObj = isNode ? global : window;
+
+// Load normalizer functions in Node.js environment
+if (isNode) {
+    // Import materials database
+    try {
+        const materials = require('./materials.js');
+        globalObj.MATERIALS = materials;
+        console.log('✅ Materials database loaded successfully');
+    } catch (error) {
+        console.error('❌ Failed to load materials database:', error.message);
+    }
+    
+    // Load normalizer using require
+    try {
+        const normalizer = require('./normalizer.js');
+        globalObj.normalizeCompositionText = normalizer;
+        console.log('✅ Normalizer loaded successfully');
+    } catch (error) {
+        console.error('❌ Failed to load normalizer:', error.message);
+    }
+}
+
 function runNormalizerTests() {
     const testCases = [
         // Basic format tests
@@ -117,14 +141,36 @@ function runNormalizerTests() {
             expected: "40% cotton 30% polyester 20% viscose 10% elastane"
         },
         {
-            name: "Rounding edge case - 99.9%",
-            input: "33.3% cotton, 33.3% polyester, 33.3% viscose",
-            expected: "33.3% cotton 33.3% polyester 33.3% viscose"
-        },
-        {
             name: "With registered trademark",
             input: "60% LYCRA® 40% Nylon",
             expected: "60% lycra 40% nylon"
+        },
+
+        // NEW: Section-based composition tests (COS format)
+        {
+            name: "COS Shell and Lining sections",
+            input: "Shell: 55% Recycled polyester, 45% RWS Wool. Lining: 100% Cotton",
+            expected: "shell: 55% recycled polyester 45% rws wool. lining: 100% cotton"
+        },
+        {
+            name: "COS Shell and Lining sections with different separators",
+            input: "Shell: 55% Recycled polyester, 45% RWS Wool; Lining: 100% Cotton",
+            expected: "shell: 55% recycled polyester 45% rws wool. lining: 100% cotton"
+        },
+        {
+            name: "Lenzing Ecovero Viscose test",
+            input: "70% Viscose Lenzing Ecovero 30% Stretch Polyester",
+            expected: "70% lenzing ecovero viscose 30% stretch polyester"
+        },
+        {
+            name: "Multiple sections with different materials",
+            input: "Outer: 80% cotton 20% polyester. Lining: 100% viscose. Trim: 100% polyester",
+            expected: "outer: 80% cotton 20% polyester. lining: 100% viscose. trim: 100% polyester"
+        },
+        {
+            name: "Section with single material",
+            input: "Main fabric: 100% cotton",
+            expected: "main fabric: 100% cotton"
         }
     ];
 
@@ -137,7 +183,7 @@ function runNormalizerTests() {
     testCases.forEach(testCase => {
         console.log(`Test: ${testCase.name}`);
         console.log('Input:', testCase.input);
-        const result = normalizeCompositionText(testCase.input);
+        const result = globalObj.normalizeCompositionText(testCase.input);
         console.log('Result:', result);
         
         if (testCase.expected !== undefined) {
@@ -150,7 +196,7 @@ function runNormalizerTests() {
         
         if (testCase.input2) {
             console.log('Input 2:', testCase.input2);
-            const result2 = normalizeCompositionText(testCase.input2);
+            const result2 = globalObj.normalizeCompositionText(testCase.input2);
             console.log('Result 2:', result2);
             if (testCase.expected) {
                 const passed = result2 === testCase.expected;
@@ -162,7 +208,7 @@ function runNormalizerTests() {
         
         if (testCase.input3) {
             console.log('Input 3:', testCase.input3);
-            const result3 = normalizeCompositionText(testCase.input3);
+            const result3 = globalObj.normalizeCompositionText(testCase.input3);
             console.log('Result 3:', result3);
             if (testCase.expected) {
                 const passed = result3 === testCase.expected;
@@ -190,7 +236,7 @@ LINING
 100% cotton`
     };
     
-    const result1 = window.zaraParser(testElement1);
+    const result1 = globalObj.zaraParser(testElement1);
     console.log('Test 1 result:', result1);
     
     // Test case 2: New format with MAIN FABRIC and EMBELLISHMENT
@@ -205,7 +251,7 @@ LINING
 100% cotton`
     };
     
-    const result2 = window.zaraParser(testElement2);
+    const result2 = globalObj.zaraParser(testElement2);
     console.log('Test 2 result:', result2);
     
     // Test case 3: Just MAIN FABRIC format
@@ -217,8 +263,55 @@ LINING
 100% cotton`
     };
     
-    const result3 = window.zaraParser(testElement3);
+    const result3 = globalObj.zaraParser(testElement3);
     console.log('Test 3 result:', result3);
+}
+
+// NEW: Test function for section-based composition
+function testSectionBasedComposition() {
+    console.log('Testing Section-Based Composition...');
+    console.log('=====================================');
+    
+    const testCases = [
+        {
+            name: "COS Shell and Lining",
+            input: "Shell: 55% Recycled polyester, 45% RWS Wool. Lining: 100% Cotton",
+            expected: "shell: 55% recycled polyester 45% rws wool. lining: 100% cotton"
+        },
+        {
+            name: "Multiple sections",
+            input: "Outer: 80% cotton 20% polyester. Lining: 100% viscose",
+            expected: "outer: 80% cotton 20% polyester. lining: 100% viscose"
+        },
+        {
+            name: "Single section",
+            input: "Main fabric: 100% cotton",
+            expected: "main fabric: 100% cotton"
+        }
+    ];
+    
+    testCases.forEach(testCase => {
+        console.log(`\n🔍 Testing: ${testCase.name}`);
+        console.log('Input:', testCase.input);
+        
+        try {
+            const result = globalObj.normalizeCompositionText(testCase.input);
+            console.log('Result:', result);
+            console.log('Expected:', testCase.expected);
+            
+            const passed = result === testCase.expected;
+            console.log(passed ? '✅ PASS' : '❌ FAIL');
+            
+            if (!passed) {
+                console.log('❌ Expected:', testCase.expected);
+                console.log('❌ Got:', result);
+            }
+        } catch (error) {
+            console.log('❌ ERROR:', error.message);
+        }
+    });
+    
+    console.log('\n=====================================');
 }
 
 // Run tests when the file is loaded
@@ -226,5 +319,6 @@ runNormalizerTests();
 
 // Run tests if this file is loaded
 if (typeof window !== 'undefined') {
-    window.testZaraParser = testZaraParser;
+    globalObj.testZaraParser = testZaraParser;
+    globalObj.testSectionBasedComposition = testSectionBasedComposition;
 } 

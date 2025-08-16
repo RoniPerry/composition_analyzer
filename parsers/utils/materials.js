@@ -1,5 +1,5 @@
 // Define materials and their sustainability scores
-window.MATERIALS = {
+const MATERIALS = {
     "cotton": {
         score: 60,
         category: "moderate"
@@ -24,6 +24,10 @@ window.MATERIALS = {
         score: 65,
         category: "moderate"
     },
+    "rws wool": {
+        score: 80,
+        category: "sustainable"
+    },
     "recycled wool": {
         score: 85,
         category: "sustainable"
@@ -39,6 +43,14 @@ window.MATERIALS = {
     "viscose": {
         score: 45,
         category: "moderate"
+    },
+    "lenzing ecovero": {
+        score: 75,
+        category: "sustainable"
+    },
+    "lenzing ecovero viscose": {
+        score: 75,
+        category: "sustainable"
     },
     "tencel": {
         score: 85,
@@ -180,4 +192,11 @@ window.MATERIALS = {
         score: 65,
         category: "moderate"
     }
-}; 
+};
+
+// Export for both browser and Node.js environments
+if (typeof window !== 'undefined') {
+    window.MATERIALS = MATERIALS;
+} else {
+    module.exports = MATERIALS;
+} 

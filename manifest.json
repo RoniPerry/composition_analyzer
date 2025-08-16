@@ -23,7 +23,6 @@
         "parsers/utils/normalizer.js",
         "parsers/unifiedParser.js",
         "parsers/zaraParser.js",
-        "parsers/utils/test.js",
         "siteConfig.js",
         "content.js"
       ]

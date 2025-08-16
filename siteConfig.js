@@ -17,7 +17,7 @@ window.siteConfig = {
     "hm.com": {
         selectors: [
             // Primary composition selectors
-            "div[id='section-materialsAndSuppliersAccordion'] div div div ul li span",
+            "div[class='fddca0']",
             // Backup selectors
             "[class*='materialsAndSuppliersAccordion']",
             "div[class*='composition']",
@@ -29,7 +29,7 @@ window.siteConfig = {
             "[class*='product-composition']",
             "[class*='product-detail-info'] [class*='composition']"
         ],
-        parser: window.unifiedParser
+        parser: window.zaraParser
     },
 
     "arket.com": {
@@ -114,8 +114,8 @@ window.siteConfig = {
 
     "stagni.com": {
         selectors: [
-            // Primary selector for ST. AGNI product info wrapper
-            ".Product__InfoWrapper",
+            // Primary selector for ST. AGNI materials section
+            "body > div:nth-child(11) > main:nth-child(3) > div:nth-child(1) > section:nth-child(4) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > div:nth-child(3) > div:nth-child(12) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1) > ul:nth-child(2)",
             // Additional selector for ST. AGNI
             "div[id='st-details_0-1'] div[class='station-tabs-content-inner']",
             // Fallback selector for product meta description
@@ -126,6 +126,30 @@ window.siteConfig = {
             "ul li"
         ],
         parser: window.unifiedParser
+    },
+
+    "cos.com": {
+        selectors: [
+            // Primary selector for COS materials section
+            "div[id='disclosure-:rp:']",
+            // Backup selectors
+            "div[id='disclosure-:rt:']",
+            "[class*='materials']",
+            "[class*='composition']"
+        ],
+        parser: window.zaraParser,
+        preProcess: function() {
+            // Add #product-description to URL if not present to make materials panel visible
+            if (!window.location.hash.includes('product-description')) {
+                window.location.hash = 'product-description';
+                // Wait a moment for the panel to load (synchronous approach)
+                // Note: This is a simple delay, not ideal but avoids breaking existing functionality
+                const start = Date.now();
+                while (Date.now() - start < 500) {
+                    // Simple delay loop
+                }
+            }
+        }
     },
 
     "ssense.com": {
