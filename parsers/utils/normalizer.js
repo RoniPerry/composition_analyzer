@@ -40,15 +40,16 @@ function cleanNonCompositionMaterials(text) {
             
             // Handle both formats
             let percentage, materialText;
+            let materialParts;
             if (/^\d/.test(pair)) {
                 // "75% cotton" format
                 [percentage, ...materialParts] = pair.split(/\s+/);
-                materialText = materialParts.join(' '); // Remove toLowerCase()
+                materialText = materialParts.join(' ').trim(); // Remove toLowerCase()
             } else {
                 // "cotton 75%" format
                 const parts = pair.split(/\s+/);
                 percentage = parts.pop(); // Get the last part (percentage)
-                materialText = parts.join(' '); // Remove toLowerCase()
+                materialText = parts.join(' ').trim(); // Remove toLowerCase()
             }
             
             console.log(`📊 Extracted: percentage=${percentage}, material="${materialText}"`);
@@ -137,8 +138,17 @@ function normalizeCompositionText(text) {
         .replace(/[\u00A0]/g, ' ')       // Replace non-breaking spaces
         .replace(/&nbsp;/g, ' ')         // Replace HTML non-breaking spaces
         .replace(/[™®©]/g, '')           // Remove trademark symbols
+        // Normalize various unicode dashes to ASCII hyphen
+        .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, '-')
         .toLowerCase()                    // Convert to lowercase
         .trim();                         // Remove leading/trailing spaces
+
+    // Step 2.1: Remove diacritics (accents)
+    try {
+        normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    } catch (e) {
+        // If normalize not supported, skip diacritic removal
+    }
     
     console.log('✨ After basic cleanup:', normalized);
     
@@ -154,19 +164,38 @@ function normalizeCompositionText(text) {
     // NEW: Step 4: Smart composition grouping by sections (BEFORE cleaning)
     const sections = [];
     // Use non-greedy pattern that looks ahead for the next section header
-    const sectionPattern = /(shell|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
+    const sectionPattern = /(shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
     const sectionMatches = Array.from(normalized.matchAll(sectionPattern));
     
     if (sectionMatches.length > 0) {
         console.log('🔍 Found section headers:', sectionMatches.length);
         
+        // Capture any leading unlabeled composition before the first labeled section
+        const preambleStart = 0;
+        const firstSectionStart = sectionMatches[0].index;
+        if (typeof firstSectionStart === 'number' && firstSectionStart > preambleStart) {
+            const preambleText = normalized.slice(preambleStart, firstSectionStart).trim();
+            if (preambleText) {
+                // Clean preamble using robust cleaner that supports both material-first and percentage-first
+                const cleaned = cleanNonCompositionMaterials(preambleText);
+                const preambleMaterials = cleaned ? extractMaterialsFromText(cleaned) : '';
+                if (preambleMaterials && preambleMaterials.length > 0) {
+                    sections.push({
+                        type: 'main fabric',
+                        materials: preambleMaterials
+                    });
+                    console.log('✅ Added unlabeled preamble as MAIN FABRIC:', preambleMaterials);
+                }
+            }
+        }
+
         for (const match of sectionMatches) {
             const sectionType = match[1]; // Keep original casing
             const sectionContent = match[2].trim();
             console.log(`📋 Processing section: ${sectionType} = "${sectionContent}"`);
             
             // Extract materials from this section
-            const sectionMaterials = extractMaterialsFromText(sectionContent);
+            const sectionMaterials = extractMaterialsFromText(cleanNonCompositionMaterials(sectionContent));
             if (sectionMaterials && sectionMaterials.length > 0) {
                 sections.push({
                     type: sectionType,
@@ -195,6 +224,53 @@ function normalizeCompositionText(text) {
     // Step 6: Fallback to original logic if no sections found
     console.log('🔄 Using fallback logic...');
     return extractMaterialsFromText(normalized);
+}
+
+// Convert normalized composition text into an array of { component, text } objects
+// Accepts either:
+// - Sectioned text: "shell: 55% recycled polyester 45% rws wool. lining: 100% cotton"
+// - Flat text: "55% tencel 45% cotton"
+function parseSectionsToComponents(normalized) {
+    if (!normalized || typeof normalized !== 'string') {
+        return [];
+    }
+
+    const results = [];
+
+    // Detect labeled sections; non-greedy up to next section label or end
+    const sectionPattern = /(shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
+    const matches = Array.from(normalized.matchAll(sectionPattern));
+
+    if (matches.length > 0) {
+        for (const match of matches) {
+            const rawComponent = match[1];
+            const content = match[2].trim()
+                .replace(/^[.\s;]+/, '')
+                .replace(/[.\s;]+$/, '');
+
+            // Normalize component label to upper case (to align with Zara parser style)
+            const component = rawComponent.replace(/\s+/g, ' ').toUpperCase();
+
+            if (content) {
+                results.push({ component, text: content });
+            }
+        }
+
+        return results.length > 0 ? results : [];
+    }
+
+    // Fallback: treat as a single MAIN FABRIC component if it looks like composition text
+    const looksLikeComposition = /\d+(?:\.\d+)?%\s+[^%\d]+/.test(normalized);
+    if (looksLikeComposition) {
+        return [
+            {
+                component: 'MAIN FABRIC',
+                text: normalized.trim()
+            }
+        ];
+    }
+
+    return [];
 }
 
 // Helper function to extract materials from text
@@ -268,6 +344,10 @@ function extractMaterialsFromText(text) {
 // Export for both browser and Node.js environments
 if (typeof window !== 'undefined') {
     window.normalizeCompositionText = normalizeCompositionText;
+    window.parseSectionsToComponents = parseSectionsToComponents;
 } else {
+    // Expose to global for Node-based tests while also exporting the function
+    global.normalizeCompositionText = normalizeCompositionText;
+    global.parseSectionsToComponents = parseSectionsToComponents;
     module.exports = normalizeCompositionText;
-} 
+}

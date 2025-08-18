@@ -127,6 +127,25 @@ function getColorForScore(score) {
     return 'low';  // Red for scores < 5
 }
 
+function matchMaterialInfo(material) {
+    const lowered = material.toLowerCase().trim();
+    const entry = Object.entries(window.MATERIALS).find(([key]) => {
+        if (lowered === key.toLowerCase().trim()) {
+            return true;
+        }
+        const materialWords = lowered.split(/\s+/).sort().join(' ');
+        const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
+        if (materialWords === keyWords) {
+            return true;
+        }
+        if (lowered.includes('lenzing') && lowered.includes('ecovero')) {
+            return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
+        }
+        return false;
+    });
+    return entry || null;
+}
+
 // Initialize the composition analysis
 function init() {
     if (!isProductPage()) {
@@ -307,26 +326,7 @@ function updateFloatingUI(compositions) {
             const material = materialParts.join(' ');
             const percentageValue = parseInt(percentage, 10);
             
-            const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
-                // Try exact match first
-                if (material === key.toLowerCase().trim()) {
-                    return true;
-                }
-                
-                // Try flexible matching for different word orders
-                const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
-                const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
-                if (materialWords === keyWords) {
-                    return true;
-                }
-                
-                // Try partial matching for special materials like "lenzing ecovero viscose"
-                if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
-                    return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
-                }
-                
-                return false;
-            });
+            const materialInfo = matchMaterialInfo(material);
             
             if (materialInfo) {
                 totalScore += materialInfo[1].score * (percentageValue / 100);
@@ -345,15 +345,14 @@ function updateFloatingUI(compositions) {
     const details = document.createElement('div');
     details.className = 'composition-details';
     
-    // Group materials by main component (OUTER SHELL or LINING)
+    // Group materials by component (MAIN FABRIC, POCKET LINING, etc.)
     const mainComponents = new Map();
     compositions.forEach(section => {
-        const [main, ...subParts] = section.component.split('\n');
-        if (!mainComponents.has(main)) {
-            mainComponents.set(main, []);
+        const componentName = section.component || 'MAIN FABRIC';
+        if (!mainComponents.has(componentName)) {
+            mainComponents.set(componentName, []);
         }
-        mainComponents.get(main).push({
-            subParts,
+        mainComponents.get(componentName).push({
             text: section.text
         });
     });
@@ -368,16 +367,6 @@ function updateFloatingUI(compositions) {
         componentSection.appendChild(mainTitle);
         
         items.forEach(item => {
-            if (item.subParts.length > 0) {
-                // Add sub-parts
-                item.subParts.forEach(subPart => {
-                    const subTitle = document.createElement('h3');
-                    subTitle.textContent = subPart;
-                    subTitle.style.marginLeft = '20px';
-                    componentSection.appendChild(subTitle);
-                });
-            }
-            
             // Add materials
             const parts = item.text.split(/\s+(?=\d+%)/);
             parts.forEach(part => {
@@ -387,32 +376,12 @@ function updateFloatingUI(compositions) {
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'material-item';
                 
-                const materialInfo = Object.entries(window.MATERIALS).find(([key]) => {
-                    // Try exact match first
-                    if (material === key.toLowerCase().trim()) {
-                        return true;
-                    }
-                    
-                    // Try flexible matching for different word orders
-                    const materialWords = material.toLowerCase().trim().split(/\s+/).sort().join(' ');
-                    const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
-                    if (materialWords === keyWords) {
-                        return true;
-                    }
-                    
-                    // Try partial matching for special materials like "lenzing ecovero viscose"
-                    if (material.toLowerCase().includes('lenzing') && material.toLowerCase().includes('ecovero')) {
-                        return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
-                    }
-                    
-                    return false;
-                });
+                const materialInfo = matchMaterialInfo(material);
                 
                 if (materialInfo) {
                     materialDiv.setAttribute('data-category', materialInfo[1].category);
                 }
                 
-                materialDiv.style.marginLeft = item.subParts.length > 0 ? '20px' : '0';
                 materialDiv.textContent = `${percentage} ${material}`;
                 componentSection.appendChild(materialDiv);
             });

@@ -181,6 +181,17 @@ function runNormalizerTests() {
             name: "Revolve concatenated sections issue",
             input: "Self 1: 95% polyester, 5% spandexSelf 2: 90% polyester, 10% spandex",
             expected: "self 1: 95% polyester 5% spandex. self 2: 90% polyester 10% spandex"
+        },
+        // New mixed unlabeled + labeled sections
+        {
+            name: "Unlabeled 50/50 with Trim",
+            input: "50% RWS Wool\n50% Recycled Polyester\nTrim: 100% Polyester Grosgrain",
+            expected: "main fabric: 50% rws wool 50% recycled polyester. trim: 100% polyester grosgrain"
+        },
+        {
+            name: "Unlabeled main + pocket lining",
+            input: "Cotton 67%, Lyocell 33%\nPocket lining: Cotton 100%",
+            expected: "main fabric: 67% cotton 33% lyocell. pocket lining: 100% cotton"
         }
     ];
 
