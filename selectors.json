@@ -1,0 +1,143 @@
+{
+  "zara.com": [
+    "div.composition span",
+    "div._composition-info",
+    "[data-qa-label='composition']",
+    ".product-detail-composition",
+    "[class*='product-detail-info'] [class*='composition']",
+    "[class*='product-composition']"
+  ],
+  "hm.com": [
+    "div[class='fddca0']",
+    "[class*='materialsAndSuppliersAccordion']",
+    "div[class*='composition']",
+    "span[class*='composition']",
+    "ul.product-materials li",
+    ".PdpComposition",
+    ".product-detail-main .materials",
+    "[class*='pdp-description-list'] [class*='materials']",
+    "[class*='product-composition']",
+    "[class*='product-detail-info'] [class*='composition']"
+  ],
+  "arket.com": [
+    "ul.list-none.gap-4 span.font-regular.bg-transparent.text-black.text-16.leading-22",
+    ".product-info__list [class*='composition']",
+    "[class*='product-composition']",
+    "[class*='material-info']",
+    "[class*='fabric-details']"
+  ],
+  "mango.com": [
+    "div#composition-info",
+    "div.productComposition",
+    ".product-features-list [class*='composition']",
+    "[class*='product-detail'] [class*='composition']",
+    "[class*='material-info']"
+  ],
+  "uniqlo.com": [
+    "div.product-specs",
+    ".product-composition",
+    ".product-info-content [class*='composition']",
+    "[class*='product-materials']",
+    "[class*='fabric-details']"
+  ],
+  "asos.com": [
+    "div[id='productDescriptionAboutMe'] div[class='F_yfF']",
+    "[data-testid='product-information-accordion'] [class*='composition']",
+    "[data-testid='product-information-accordion'] [class*='material']",
+    "div[data-testid='product-information-accordion'] li",
+    "ul#product-details li",
+    ".product-description",
+    "[data-test-id*='product-details'] [class*='composition']",
+    "[data-test-id*='product-details'] [class*='material']",
+    "[class*='product-info'] [class*='materials']",
+    "[class*='fabric-care']",
+    "[class*='composition']",
+    "[class*='material']"
+  ],
+  "net-a-porter.com": [
+    "div.product-info__composition",
+    ".product-details__composition",
+    "[data-testid*='product-details'] [class*='composition']",
+    "[class*='product-information'] [class*='materials']",
+    "[class*='fabric-details']"
+  ],
+  "farfetch.com": [
+    "span[data-component='Body'][class*='ltr-4y8w0i-Body']",
+    "div[class*='ltr-92qs1a'] span[data-component='Body']",
+    "body > div:nth-child(2) > main:nth-child(5) > div:nth-child(4) > div:nth-child(3) > div:nth-child(1) > section:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > p:nth-child(2)",
+    "[data-testid='product-information-accordion'] div[class*='composition']",
+    "div[class*='composition']"
+  ],
+  "stagni.com": [
+    "body > div:nth-child(11) > main:nth-child(3) > div:nth-child(1) > section:nth-child(4) > div:nth-child(1) > div:nth-child(5) > div:nth-child(1) > div:nth-child(3) > div:nth-child(12) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > div:nth-child(1) > ul:nth-child(2)",
+    "div[id='st-details_0-1'] div[class='station-tabs-content-inner']",
+    ".ProductMeta__Description.sts",
+    "[class*='materials']",
+    "[class*='composition']",
+    "ul li"
+  ],
+  "cos.com": [
+    "div[id='disclosure-:rp:']",
+    "div[id='disclosure-:rt:']",
+    "[class*='materials']",
+    "[class*='composition']"
+  ],
+  "ssense.com": [
+    "div.pdp-scroll__column-content--full-wdith.pdp-scroll__column-content--left div.s-column.pdp-product-description div div.s-row span p.s-text",
+    ".product__details",
+    "[data-test*='product-description'] [class*='composition']",
+    "[class*='product-info'] [class*='materials']",
+    "[class*='fabric-details']"
+  ],
+  "matchesfashion.com": [
+    ".product-details__info",
+    "[data-testid*='product-details'] [class*='composition']",
+    "[class*='product-information'] [class*='materials']",
+    "[class*='fabric-details']"
+  ],
+  "nordstrom.com": [
+    ".product-details ul li",
+    "#product-details",
+    "[data-element-id*='product-details'] [class*='composition']",
+    "[class*='product-info'] [class*='materials']",
+    "[class*='fabric-details']"
+  ],
+  "revolve.com": [
+    ".product-details__list.u-margin-l--none li:first-child",
+    ".product-details__list.u-margin-l--none li:nth-child(1)",
+    ".product-details__list.u-margin-l--none > li:first-of-type",
+    ".product-description",
+    "span.composition",
+    "[data-test*='product-details'] [class*='composition']",
+    "[data-test*='product-details'] [class*='material']",
+    ".product-details li",
+    ".product-info li",
+    "[class*='material-composition']",
+    "[class*='fabric-composition']",
+    "[class*='product-info'] [class*='materials']",
+    "[class*='fabric-details']",
+    "[class*='composition']",
+    "[class*='material']"
+  ],
+  "frett.life": [
+    "div[data-block-id*='accordion'] p:first-child",
+    "div[data-block-type='accordion'] p:first-child",
+    "div.metafield-rich_text_field p"
+  ],
+  "massimodutti.com": [
+    "div.fabric-and-care p",
+    "div[class*='fabric'] p",
+    "div.outer-layer",
+    "div.outer-shell",
+    "[class*='fabric-details']",
+    "[class*='product-composition']",
+    "[class*='material-info']"
+  ],
+  "trestlv.com": [
+    "ul li",
+    "[class*='product-info'] li",
+    "[class*='product-details'] li",
+    "[class*='composition']",
+    "[class*='material-info']"
+  ]
+}

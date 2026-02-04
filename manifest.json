@@ -5,7 +5,8 @@
   "description": "Analyzes fabric composition on fashion websites",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "https://*/*",
@@ -24,6 +25,11 @@
         "parsers/unifiedParser.js",
         "parsers/zaraParser.js",
         "siteConfig.js",
+        "remoteConfig.js",
+        "pageDetector.js",
+        "compositionFinder.js",
+        "scorer.js",
+        "widget.js",
         "content.js"
       ]
     }

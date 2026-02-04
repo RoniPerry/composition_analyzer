@@ -62,9 +62,62 @@ p {
     color: var(--color-text);
 }
 
+.loading-message,
+.success-message,
+.error-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.popup-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(46, 125, 50, 0.2);
+    border-top-color: var(--color-high);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-message p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.success-icon,
+.error-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.success-icon {
+    color: var(--color-high);
+}
+
+.error-icon {
+    color: var(--color-error);
+}
+
+.success {
+    color: var(--color-high);
+    font-weight: 600;
+    text-align: center;
+    margin: 0;
+}
+
 .error {
     color: var(--color-error);
-    font-style: italic;
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
 }
 
 ul {

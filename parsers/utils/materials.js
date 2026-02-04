@@ -188,9 +188,70 @@ const MATERIALS = {
         score: 65,
         category: "moderate"
     },
-    "makò cotton": {
+    // Cotton variants
+    "pima cotton": {
+        score: 80,
+        category: "sustainable"
+    },
+    "bci cotton": {
+        score: 70,
+        category: "sustainable"
+    },
+    "supima cotton": {
+        score: 80,
+        category: "sustainable"
+    },
+    // Recycled variants
+    "recycled viscose": {
+        score: 70,
+        category: "sustainable"
+    },
+    "recycled polyamide": {
+        score: 55,
+        category: "sustainable"
+    },
+    // Natural fibers
+    "sisal": {
+        score: 75,
+        category: "regenerative"
+    },
+    "abaca": {
+        score: 75,
+        category: "regenerative"
+    },
+    "coir": {
+        score: 70,
+        category: "regenerative"
+    },
+    // Synthetic variants
+    "elastomultiester": {
+        score: 30,
+        category: "synthetic"
+    },
+    "modacrylic": {
+        score: 30,
+        category: "synthetic"
+    },
+    "elastodiene": {
+        score: 25,
+        category: "synthetic"
+    },
+    // Branded/Specialty materials
+    "tencel modal": {
+        score: 80,
+        category: "sustainable"
+    },
+    "sorona": {
         score: 65,
         category: "moderate"
+    },
+    "repreve": {
+        score: 65,
+        category: "sustainable"
+    },
+    "pinatex": {
+        score: 80,
+        category: "regenerative"
     }
 };
 

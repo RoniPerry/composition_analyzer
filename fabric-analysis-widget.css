@@ -71,6 +71,7 @@
     letter-spacing: 1px;
 }
 
+.minimize-button,
 .close-button {
     background: none;
     border: none;
@@ -83,13 +84,29 @@
     line-height: 1;
 }
 
+.minimize-button:hover,
 .close-button:hover {
     opacity: 1;
 }
 
+.minimize-button:focus,
+.close-button:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+}
+
 #fabric-analysis-container.minimized .composition-details,
-#fabric-analysis-container.minimized .sustainability-score {
+#fabric-analysis-container.minimized .sustainability-score,
+#fabric-analysis-container.minimized .bug-report-section,
+#fabric-analysis-container.minimized .no-composition-section,
+#fabric-analysis-container.minimized .error-section,
+#fabric-analysis-container.minimized .loading-section {
     display: none;
+}
+
+#fabric-analysis-container.minimized {
+    width: auto;
+    min-width: 200px;
 }
 
 .composition-details {
@@ -215,7 +232,7 @@
 .bug-report-text {
     margin: 0 0 8px 0;
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(0, 0, 0, 0.75);
 }
 
 .bug-report-button {
@@ -374,6 +391,27 @@
     transform: translateY(1px);
 }
 
+/* Loading Section */
+.loading-section {
+    padding: 30px 12px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(46, 125, 50, 0.2);
+    border-top-color: #2e7d32;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* No Composition Section */
 .no-composition-section {
     padding: 20px 12px;
@@ -382,9 +420,33 @@
 }
 
 .no-composition-text {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 14px;
+    margin: 0 0 12px 0;
+    color: rgba(0, 0, 0, 0.7);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.retry-button {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+    background: #43a047;
+}
+
+.retry-button:focus {
+    outline: 2px solid #2e7d32;
+    outline-offset: 2px;
 }
 
 /* Error Section */
@@ -395,9 +457,18 @@
 }
 
 .error-text {
-    margin: 0;
+    margin: 0 0 12px 0;
     color: var(--color-error);
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.error-section .retry-button {
+    background: var(--color-error);
+}
+
+.error-section .retry-button:hover {
+    background: var(--color-low-gradient);
 }
 
 /* Error message */

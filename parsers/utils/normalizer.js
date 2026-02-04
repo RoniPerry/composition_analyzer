@@ -8,6 +8,43 @@
 // "100% Makò Cotton" (Special characters)
 // Output format: "55% tencel 45% cotton" (space-separated, lowercase)
 
+// Material synonym map for normalization
+const MATERIAL_SYNONYMS = {
+    'elastane': ['spandex', 'lycra'],
+    'polyamide': ['nylon'],
+    'viscose': ['rayon'],
+    'acrylic': ['acrylique', 'acrilico'],
+    'polyester': ['polyestere', 'poliester'],
+    'cotton': ['coton', 'cotone', 'algodón'],
+    'wool': ['laine', 'lana', 'wolle'],
+    'silk': ['soie', 'seta', 'seide'],
+    'linen': ['lin', 'lino', 'leinen'],
+    'leather': ['cuir', 'cuoio', 'leder'],
+    'cashmere': ['cachemire', 'cashmere', 'kaschmir'],
+    'modal': ['modal®', 'modall'],
+    'tencel': ['tencel®', 'tencell'],
+    'lyocell': ['lyocell®', 'lyocel']
+};
+
+// Helper function to normalize material name using synonym map
+function normalizeMaterialName(material) {
+    // Remove trademark symbols and normalize case
+    material = material.toLowerCase().replace(/[™®©]/g, '').trim();
+
+    // Check for material variations
+    for (const [standard, variations] of Object.entries(MATERIAL_SYNONYMS)) {
+        if (variations.some(v => material.includes(v))) {
+            return standard;
+        }
+        // Also check if material exactly matches the standard name
+        if (material === standard) {
+            return standard;
+        }
+    }
+
+    return material;
+}
+
 // Helper function to clean text of material names in non-composition contexts
 function cleanNonCompositionMaterials(text) {
     console.log('🧽 cleanNonCompositionMaterials called with:', text);
@@ -277,25 +314,32 @@ function parseSectionsToComponents(normalized) {
 function extractMaterialsFromText(text) {
     const materials = [];
     let totalPercentage = 0;
-    
+
     // Simple pattern that captures each percentage-material pair
     const regex = /(\d+(?:\.\d+)?)%\s*([^0-9%]+?)(?=\s*\d+%|$)/gi;
     const matches = Array.from(text.matchAll(regex));
-    
+
     console.log('🔍 Regex matches found:', matches.length);
     matches.forEach((match, index) => {
         console.log(`  Match ${index}:`, match);
     });
-    
+
     for (const match of matches) {
         // Handle percentage-first format: "55% cotton"
         const percentage = parseFloat(match[1]);
-        const material = match[2].trim()
+        let material = match[2].trim()
             .replace(/[,.;]$/, '') // Remove trailing punctuation
             .replace(/^[,.;]/, ''); // Remove leading punctuation
-        
+
         console.log(`📊 Processing match: percentage=${percentage}, material="${material}"`);
-        
+
+        // Apply synonym normalization to material name
+        const normalizedMaterial = normalizeMaterialName(material);
+        if (normalizedMaterial !== material) {
+            console.log(`🔄 Normalized "${material}" to "${normalizedMaterial}"`);
+            material = normalizedMaterial;
+        }
+
         if (percentage && material) {
             totalPercentage += percentage;
             materials.push(`${percentage}% ${material}`);
@@ -307,17 +351,34 @@ function extractMaterialsFromText(text) {
     
     console.log('📋 Final materials array:', materials);
     console.log('🧮 Total percentage calculated:', totalPercentage);
-    
-    // Validate total percentage (allow for small rounding differences)
-    if (materials.length > 0 && Math.abs(totalPercentage - 100) <= 0.2) {
-        const result = materials.join(' '); // Remove commas, use spaces
-        console.log('✅ Validation passed! Returning:', result);
-        return result;
-    } else {
-        console.log(`❌ Validation failed! Total: ${totalPercentage}%, expected: 100% (±0.2)`);
+
+    // Relaxed validation: accept compositions with reasonable coverage
+    if (materials.length > 0) {
+        // Accept if total is close to 100% (within ±0.2%)
+        if (Math.abs(totalPercentage - 100) <= 0.2) {
+            const result = materials.join(' ');
+            console.log('✅ Validation passed (100%)! Returning:', result);
+            return result;
+        }
+
+        // Accept if total is at least 90% (partial composition)
+        if (totalPercentage >= 90) {
+            const result = materials.join(' ');
+            console.log(`✅ Partial composition accepted (${totalPercentage}%)! Returning:`, result);
+            return result;
+        }
+
+        // Accept if total is between 80-89% (approximate composition)
+        if (totalPercentage >= 80) {
+            const result = materials.join(' ');
+            console.log(`⚠️ Approximate composition accepted (${totalPercentage}%)! Returning:`, result);
+            return result;
+        }
+
+        // If below 80%, try to find a subset that adds up to 100%
+        console.log(`❌ Validation failed! Total: ${totalPercentage}%, below 80% threshold`);
         console.log('❌ Materials found:', materials);
-        
-        // If validation fails, try to find a subset that adds up to 100%
+
         if (materials.length > 1) {
             console.log('🔄 Trying to find valid subset...');
             for (let i = 0; i < materials.length; i++) {
@@ -327,27 +388,31 @@ function extractMaterialsFromText(text) {
                         const percent = parseFloat(mat.match(/\d+(?:\.\d+)?/)[0]);
                         return sum + percent;
                     }, 0);
-                    
+
                     if (Math.abs(subsetTotal - 100) <= 0.2) {
-                        const result = subset.join(' '); // Remove commas, use spaces
+                        const result = subset.join(' ');
                         console.log(`✅ Found valid subset: ${result} (total: ${subsetTotal}%)`);
                         return result;
                     }
                 }
             }
         }
-        
+
         return ''; // Return empty string if validation fails
     }
+
+    return '';
 }
 
 // Export for both browser and Node.js environments
 if (typeof window !== 'undefined') {
     window.normalizeCompositionText = normalizeCompositionText;
     window.parseSectionsToComponents = parseSectionsToComponents;
+    window.normalizeMaterialName = normalizeMaterialName;
 } else {
     // Expose to global for Node-based tests while also exporting the function
     global.normalizeCompositionText = normalizeCompositionText;
     global.parseSectionsToComponents = parseSectionsToComponents;
+    global.normalizeMaterialName = normalizeMaterialName;
     module.exports = normalizeCompositionText;
 }

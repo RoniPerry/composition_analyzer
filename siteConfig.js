@@ -148,16 +148,12 @@ window.siteConfig = {
             "[class*='composition']"
         ],
         parser: window.zaraParser,
-        preProcess: function() {
+        preProcess: async function() {
             // Add #product-description to URL if not present to make materials panel visible
             if (!window.location.hash.includes('product-description')) {
                 window.location.hash = 'product-description';
-                // Wait a moment for the panel to load (synchronous approach)
-                // Note: This is a simple delay, not ideal but avoids breaking existing functionality
-                const start = Date.now();
-                while (Date.now() - start < 500) {
-                    // Simple delay loop
-                }
+                // Wait asynchronously for the panel to load
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
     },

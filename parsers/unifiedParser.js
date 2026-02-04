@@ -62,20 +62,30 @@ window.unifiedParser = function(element) {
             // For section headers, look for a higher-level parent that contains the full composition
             let parentElement = element.parentElement;
             let aggregated = '';
-            
-            // Try to find a parent that contains both the main fabric and the section
-            while (parentElement && !aggregated.includes('67%') && !aggregated.includes('33%')) {
+            let depth = 0;
+            const MAX_DEPTH = 5; // Limit DOM walking to prevent infinite loops
+
+            // Helper function to check if text contains valid composition pattern
+            function hasValidComposition(text) {
+                // Look for percentage pattern (e.g., "55%", "33.5%")
+                const percentagePattern = /\d+(?:\.\d+)?%/;
+                return percentagePattern.test(text);
+            }
+
+            // Try to find a parent that contains a complete composition
+            while (parentElement && depth < MAX_DEPTH) {
                 aggregated = parentElement.textContent.trim();
-                console.log('🔄 Checking parent level:', aggregated);
-                
-                // Look for a parent that contains both the main fabric composition and section headers
-                if (aggregated.includes('67%') && aggregated.includes('33%') && 
+                console.log(`🔄 Checking parent level ${depth}:`, aggregated.substring(0, 100) + '...');
+
+                // Check if this parent has valid composition and multiple sections
+                if (hasValidComposition(aggregated) &&
                     (aggregated.includes('pocket lining:') || aggregated.includes('trim:') || aggregated.includes('lining:'))) {
-                    console.log('✅ Found parent with full composition:', aggregated);
+                    console.log('✅ Found parent with full composition at depth', depth);
                     break;
                 }
-                
+
                 parentElement = parentElement.parentElement;
+                depth++;
             }
             
             if (aggregated) {
