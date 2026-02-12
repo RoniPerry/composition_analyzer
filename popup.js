@@ -70,12 +70,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayError(message) {
         console.error('Error:', message);
         if (!resultsDiv) return;
-        resultsDiv.innerHTML = `<div class="error-message"><span class="error-icon">⚠</span><p class="error">${message}</p></div>`;
+        resultsDiv.innerHTML = `<div class="error-message"><span class="error-icon">&#9888;</span><p class="error">${message}</p></div>`;
     }
 
     function displaySuccess(message) {
         if (!resultsDiv) return;
-        resultsDiv.innerHTML = `<div class="success-message"><span class="success-icon">✓</span><p class="success">${message}</p></div>`;
+        resultsDiv.innerHTML = `<div class="success-message"><span class="success-icon">&#10003;</span><p class="success">${message}</p></div>`;
     }
 
     // Helper function to inject scripts sequentially
