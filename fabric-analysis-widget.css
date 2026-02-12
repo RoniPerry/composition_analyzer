@@ -100,7 +100,8 @@
 #fabric-analysis-container.minimized .bug-report-section,
 #fabric-analysis-container.minimized .no-composition-section,
 #fabric-analysis-container.minimized .error-section,
-#fabric-analysis-container.minimized .loading-section {
+#fabric-analysis-container.minimized .loading-section,
+#fabric-analysis-container.minimized .disclaimer-footer {
     display: none;
 }
 

@@ -3,21 +3,81 @@
 
 function matchMaterialInfo(material) {
     const lowered = material.toLowerCase().trim();
-    const entry = Object.entries(window.MATERIALS).find(([key]) => {
-        if (lowered === key.toLowerCase().trim()) {
-            return true;
-        }
+
+    // Step 1: Try exact match
+    const exactEntry = Object.entries(window.MATERIALS).find(([key]) => {
+        if (lowered === key.toLowerCase().trim()) return true;
         const materialWords = lowered.split(/\s+/).sort().join(' ');
         const keyWords = key.toLowerCase().trim().split(/\s+/).sort().join(' ');
-        if (materialWords === keyWords) {
-            return true;
-        }
+        if (materialWords === keyWords) return true;
         if (lowered.includes('lenzing') && lowered.includes('ecovero')) {
             return key.toLowerCase().includes('lenzing') && key.toLowerCase().includes('ecovero');
         }
         return false;
     });
-    return entry || null;
+    if (exactEntry) return exactEntry;
+
+    // Step 2: Keyword-based fallback matching
+    // Check for certification prefixes that indicate sustainability
+    var hasCertification = /\b(rws|gots|ocs|grs|rcs|bci|oeko-tex|oekotex)\b/i.test(lowered);
+    var hasRecycled = /\b(recycled|regen|upcycled)\b/i.test(lowered);
+    var hasOrganic = /\borganic\b/i.test(lowered);
+
+    // Map material type keywords to base materials
+    var baseMaterial = null;
+    if (/\b(merino|lambswool|lamb wool|cashmere|alpaca|mohair|angora)\b/i.test(lowered)) {
+        baseMaterial = 'wool';
+    } else if (/\b(cotton|denim)\b/i.test(lowered)) {
+        baseMaterial = 'cotton';
+    } else if (/\b(polyester|poly)\b/i.test(lowered)) {
+        baseMaterial = 'polyester';
+    } else if (/\b(nylon|polyamide)\b/i.test(lowered)) {
+        baseMaterial = 'nylon';
+    } else if (/\b(viscose|rayon)\b/i.test(lowered)) {
+        baseMaterial = 'viscose';
+    } else if (/\b(linen|flax)\b/i.test(lowered)) {
+        baseMaterial = 'linen';
+    } else if (/\b(silk)\b/i.test(lowered)) {
+        baseMaterial = 'silk';
+    } else if (/\b(hemp)\b/i.test(lowered)) {
+        baseMaterial = 'hemp';
+    } else if (/\b(lyocell|tencel)\b/i.test(lowered)) {
+        baseMaterial = 'tencel';
+    }
+
+    if (baseMaterial) {
+        // Try to find the best matching variant
+        var searchKey = baseMaterial;
+        if (hasRecycled) {
+            searchKey = 'recycled ' + baseMaterial;
+        } else if (hasOrganic) {
+            searchKey = 'organic ' + baseMaterial;
+        } else if (hasCertification && (baseMaterial === 'wool' || baseMaterial === 'cotton')) {
+            // RWS wool, GOTS cotton, etc. - look for certified variant or boost base
+            searchKey = 'rws ' + baseMaterial;
+        }
+
+        // Find in materials database
+        var fallbackEntry = Object.entries(window.MATERIALS).find(([key]) =>
+            key.toLowerCase() === searchKey.toLowerCase()
+        );
+        if (fallbackEntry) return fallbackEntry;
+
+        // If certified variant not found, use base material but note it's certified
+        var baseEntry = Object.entries(window.MATERIALS).find(([key]) =>
+            key.toLowerCase() === baseMaterial.toLowerCase()
+        );
+        if (baseEntry && hasCertification) {
+            // Return base material with boosted score for certification
+            return [baseEntry[0], {
+                score: Math.min(baseEntry[1].score + 15, 90),
+                category: 'sustainable'
+            }];
+        }
+        return baseEntry || null;
+    }
+
+    return null;
 }
 
 function calculateScore(compositions) {

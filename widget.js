@@ -19,7 +19,9 @@ function createFloatingUI() {
     const infoIcon = document.createElement('button');
     infoIcon.innerHTML = 'ⓘ';
     infoIcon.setAttribute('aria-label', 'Information about beta version');
-    infoIcon.style.cssText = 'background: none; border: none; color: #666; cursor: pointer; font-size: 14px; margin-left: 8px; padding: 2px; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;';
+    infoIcon.style.cssText = 'background: none; border: none; color: white; cursor: pointer; font-size: 14px; margin-left: 8px; padding: 2px; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; opacity: 0.8; transition: opacity 0.2s;';
+    infoIcon.onmouseenter = () => infoIcon.style.opacity = '1';
+    infoIcon.onmouseleave = () => infoIcon.style.opacity = '0.8';
     infoIcon.onclick = () => showBetaInfo();
 
     const minimizeBtn = document.createElement('button');
@@ -68,6 +70,9 @@ function createFloatingUI() {
     bugReportText.appendChild(emailButton);
     bugReportSection.appendChild(bugReportText);
     container.appendChild(bugReportSection);
+
+    // Add disclaimer footer
+    container.appendChild(createDisclaimerFooter());
 
     // Add drag functionality with touch support and boundary constraints
     setupDragBehavior(container, header, closeBtn, minimizeBtn);
@@ -338,6 +343,9 @@ function updateFloatingUI(compositions) {
     bugReportSection.appendChild(bugReportText);
     container.appendChild(bugReportSection);
 
+    // Add disclaimer footer
+    container.appendChild(createDisclaimerFooter());
+
     if (wasMinimized) {
         container.classList.add('minimized');
     }
@@ -388,6 +396,7 @@ function showNoCompositionUI() {
     if (bugReportSection) {
         container.appendChild(bugReportSection);
     }
+    container.appendChild(createDisclaimerFooter());
 }
 
 function showErrorUI(error) {
@@ -438,6 +447,7 @@ function showErrorUI(error) {
     if (bugReportSection) {
         container.appendChild(bugReportSection);
     }
+    container.appendChild(createDisclaimerFooter());
 }
 
 function showLoadingUI() {
@@ -476,6 +486,7 @@ function showLoadingUI() {
     if (bugReportSection) {
         container.appendChild(bugReportSection);
     }
+    container.appendChild(createDisclaimerFooter());
 }
 
 function showBetaInfo() {
@@ -685,6 +696,19 @@ function showBugReportForm() {
 
     document.body.appendChild(modal);
     descTextarea.focus();
+}
+
+function createDisclaimerFooter() {
+    const footer = document.createElement('div');
+    footer.className = 'disclaimer-footer';
+    footer.style.cssText = 'padding: 6px 12px; background: rgba(0,0,0,0.05); border-top: 1px solid rgba(0,0,0,0.1); text-align: center;';
+
+    const text = document.createElement('p');
+    text.style.cssText = 'margin: 0; font-size: 10px; color: rgba(0,0,0,0.5); line-height: 1.4;';
+    text.textContent = 'For informational purposes only. Please verify with official product details.';
+
+    footer.appendChild(text);
+    return footer;
 }
 
 // Export to global scope for use by other content scripts
