@@ -201,7 +201,7 @@ function normalizeCompositionText(text) {
     // NEW: Step 4: Smart composition grouping by sections (BEFORE cleaning)
     const sections = [];
     // Use non-greedy pattern that looks ahead for the next section header
-    const sectionPattern = /(shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
+    const sectionPattern = /(shell|pocket\s+lining|lining|filling|coating|base\s+fabric|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|filling|coating|base\s+fabric|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
     const sectionMatches = Array.from(normalized.matchAll(sectionPattern));
     
     if (sectionMatches.length > 0) {
@@ -275,7 +275,7 @@ function parseSectionsToComponents(normalized) {
     const results = [];
 
     // Detect labeled sections; non-greedy up to next section label or end
-    const sectionPattern = /(shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
+    const sectionPattern = /(shell|pocket\s+lining|lining|filling|coating|base\s+fabric|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):\s*(.*?)(?=\s*(?:shell|pocket\s+lining|lining|filling|coating|base\s+fabric|trim|outer|main\s+fabric|fabric|material|self\s*1|self\s*2):|$)/gi;
     const matches = Array.from(normalized.matchAll(sectionPattern));
 
     if (matches.length > 0) {

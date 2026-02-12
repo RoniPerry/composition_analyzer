@@ -70,6 +70,8 @@ function scanForComposition() {
     }
 
     var percentagePattern = /\d+(?:\.\d+)?%/;
+    // Patterns that look like percentages but are NOT composition (promos, stats, etc.)
+    var promoPatterns = /\d+%\s*(off|discount|sale|save|order|cashback|back|increase|decrease|fewer|more|less|your)/i;
     var candidates = [];
     var seenTexts = new Set();
 
@@ -80,12 +82,14 @@ function scanForComposition() {
     while ((node = walker.nextNode())) {
         var text = node.textContent.trim();
         if (!text || !percentagePattern.test(text)) continue;
+        if (promoPatterns.test(text)) continue;
         if (hasExcludedAncestor(node)) continue;
 
         var block = getBlockAncestor(node);
         if (!block) continue;
 
         var blockText = block.textContent.trim();
+        if (promoPatterns.test(blockText)) continue;
         if (seenTexts.has(blockText)) continue;
         seenTexts.add(blockText);
 
@@ -146,27 +150,39 @@ async function findCompositionSections() {
     console.log('Found site-specific elements:', siteElements.length);
 
     var foundComposition = false;
+    var seenComponents = new Set();
 
     function addUniqueSection(section) {
         section.text = section.text.replace(/\s+/g, ' ').trim();
+        // Deduplicate by component name - first one wins
+        var componentKey = section.component.toUpperCase().trim();
+        if (seenComponents.has(componentKey)) return;
+
         var exists = Array.from(sections).some(function(existing) {
             var obj = JSON.parse(existing);
-            return obj.component === section.component && obj.text === section.text;
+            return obj.text === section.text;
         });
         if (!exists) {
+            seenComponents.add(componentKey);
             sections.add(JSON.stringify(section));
             foundComposition = true;
         }
     }
 
-    siteElements.forEach(function(element) {
+    for (var i = 0; i < siteElements.length; i++) {
+        var element = siteElements[i];
         var parsedSections = siteConfig.parser(element);
         if (parsedSections && parsedSections.length > 0) {
             parsedSections.forEach(function(section) {
                 addUniqueSection(section);
             });
+            // If we found a good result with multiple sections, stop looking
+            if (sections.size >= 1) {
+                console.log('Found composition, stopping element search');
+                break;
+            }
         }
-    });
+    }
 
     if (foundComposition) {
         console.log('Selector-based search found composition');

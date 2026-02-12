@@ -10,7 +10,8 @@ function isProductPage() {
         /-pid-/i,
         /\/shopping\/[^\/]+\/[^\/]+/i,  // For Farfetch URLs
         /p\d{8}\.html/i,  // For Zara URLs (e.g., p08074911.html)
-        /\/prd\/\d+/i  // For ASOS URLs (e.g., /prd/208118633)
+        /\/prd\/\d+/i,  // For ASOS URLs (e.g., /prd/208118633)
+        /product\.[^.]+\.\d+\.html/i  // For COS/H&M URLs (e.g., product.oversized-t-shirt.1228580001.html)
     ];
 
     // Check URL patterns

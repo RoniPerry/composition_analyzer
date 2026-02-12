@@ -140,21 +140,29 @@ window.siteConfig = {
 
     "cos.com": {
         selectors: [
-            // Primary selector for COS materials section
-            "div[id='disclosure-:rp:']",
-            // Backup selectors
-            "div[id='disclosure-:rt:']",
+            // After "Details & Description" drawer opens, look for composition content
+            "[class*='composition']",
             "[class*='materials']",
-            "[class*='composition']"
+            // Generic selectors for the drawer/panel content
+            "div[role='dialog'] div",
+            "div[role='dialog'] p",
+            "div[role='dialog'] li"
         ],
         parser: window.zaraParser,
         preProcess: async function() {
-            // Add #product-description to URL if not present to make materials panel visible
-            if (!window.location.hash.includes('product-description')) {
-                window.location.hash = 'product-description';
-                // Wait asynchronously for the panel to load
-                await new Promise(resolve => setTimeout(resolve, 500));
+            // COS hides composition behind "Details & Description" button
+            // Click it to open the drawer/panel
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                var text = buttons[i].textContent.trim().toLowerCase();
+                if (text.includes('details') || text.includes('composition')) {
+                    console.log('COS preProcess: clicking button:', buttons[i].textContent.trim());
+                    buttons[i].click();
+                    break;
+                }
             }
+            // Wait for the drawer/panel to open and render
+            await new Promise(function(resolve) { setTimeout(resolve, 1500); });
         }
     },
 

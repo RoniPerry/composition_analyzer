@@ -46,6 +46,45 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
+// Detect SPA navigation (URL changes without page reload)
+var lastUrl = window.location.href;
+var navigationObserver = new MutationObserver(function() {
+    if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        console.log('SPA navigation detected, re-analyzing...');
+        // Remove old widget so it gets recreated with fresh data
+        var oldContainer = document.getElementById('fabric-analysis-container');
+        if (oldContainer) oldContainer.remove();
+        // Delay to let the new page content render
+        setTimeout(init, 1000);
+    }
+});
+navigationObserver.observe(document.body, { childList: true, subtree: true });
+
+// Also listen for History API navigation
+var origPushState = history.pushState;
+history.pushState = function() {
+    origPushState.apply(this, arguments);
+    window.dispatchEvent(new Event('locationchange'));
+};
+var origReplaceState = history.replaceState;
+history.replaceState = function() {
+    origReplaceState.apply(this, arguments);
+    window.dispatchEvent(new Event('locationchange'));
+};
+window.addEventListener('popstate', function() {
+    window.dispatchEvent(new Event('locationchange'));
+});
+window.addEventListener('locationchange', function() {
+    if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        console.log('History navigation detected, re-analyzing...');
+        var oldContainer = document.getElementById('fabric-analysis-container');
+        if (oldContainer) oldContainer.remove();
+        setTimeout(init, 1000);
+    }
+});
+
 // Start the analysis when the page is ready
 if (document.readyState === 'complete') {
     init();

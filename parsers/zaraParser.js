@@ -1,7 +1,16 @@
 // Zara specific parser
 window.zaraParser = function(element) {
     const sections = [];
-    const text = element.textContent.trim();
+    var text = element.textContent.trim();
+
+    // Strip "Which contains at least:" section and everything after it
+    // COS/Zara pages repeat materials under this heading with certification details
+    var containsIdx = text.indexOf('Which contains at least');
+    if (containsIdx !== -1) {
+        text = text.substring(0, containsIdx).trim();
+        console.log('Stripped "Which contains at least" section');
+    }
+
     console.log('Parsing Zara text:', text);
     console.log('Raw text length:', text.length);
     console.log('Text contains newlines:', text.includes('\n'));
@@ -65,33 +74,55 @@ window.zaraParser = function(element) {
     
     // Since the text might not have newlines, we need to use regex to find sections
     // Look for section headers in the concatenated text (with or without colons)
-    const sectionPattern = /(OUTER\s*SHELL|MAIN\s*FABRIC|EMBELLISHMENT|LINING|SHELL|FABRIC):?\s*/gi;
+    const sectionPattern = /(OUTER\s*SHELL|BASE\s*FABRIC|MAIN\s*FABRIC|COATING|FILLING|EMBELLISHMENT|POCKET\s*LINING|LINING|TRIM|SHELL|FABRIC):?\s*/gi;
     const sectionMatches = Array.from(text.matchAll(sectionPattern));
     
     console.log('Found section matches:', sectionMatches);
     
     if (sectionMatches.length > 0) {
-        // Process each section
+        // Build sections: combine parent + child headers (e.g., "OUTER SHELL" + "BASE FABRIC")
+        let pendingParent = null;
+
         for (let i = 0; i < sectionMatches.length; i++) {
             const currentMatch = sectionMatches[i];
             const sectionName = currentMatch[1];
             const sectionStart = currentMatch.index;
-            
+            const sectionEnd = currentMatch.index + currentMatch[0].length;
+
             // Find the end of this section (start of next section or end of text)
             const nextSectionStart = i < sectionMatches.length - 1 ? sectionMatches[i + 1].index : text.length;
-            const sectionContent = text.substring(sectionStart + sectionName.length, nextSectionStart).trim();
-            
+            const sectionContent = text.substring(sectionEnd, nextSectionStart).trim();
+
             console.log(`Processing section: ${sectionName}`);
             console.log(`Section content: "${sectionContent}"`);
-            
+
+            // Check if this section has actual material content (percentages)
+            const hasMaterials = /\d+%/.test(sectionContent);
+
+            if (!hasMaterials && !sectionContent) {
+                // Empty section - this is a parent header (e.g., "OUTER SHELL" before "BASE FABRIC")
+                pendingParent = sectionName;
+                console.log(`Pending parent header: ${sectionName}`);
+                continue;
+            }
+
+            // Build the display name
+            let displayName = sectionName;
+            if (pendingParent) {
+                displayName = pendingParent + ' - ' + sectionName;
+                pendingParent = null;
+            }
+
             // Extract materials from this section
             const material = parseMaterialPercentage(sectionContent);
             if (material) {
                 sections.push({
-                    component: sectionName,
+                    component: displayName,
                     text: material
                 });
-                console.log(`Added section: ${sectionName} = ${material}`);
+                console.log(`Added section: ${displayName} = ${material}`);
+            } else {
+                pendingParent = null;
             }
         }
     } else {
